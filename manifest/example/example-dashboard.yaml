@@ -1,0 +1,126 @@
+apiVersion: "appoptics.io/v1"
+kind: "Dashboard"
+metadata:
+  name: "exampleDashboard"
+  namespace: default
+spec:
+  namespace: "default"
+  token: ""
+  data: |-
+    name: Kafka Dashboard
+    charts:
+    - name: 'Kafka: Under Replicated Partitions'
+      type: line
+      streams:
+      - group_function: average
+        summary_function: sum
+        tags:
+        - name: source
+          grouped: true
+        - name: host
+          dynamic: true
+        metric: kafka.server.ReplicaManager.UnderReplicatedPartitions
+    - name: 'Kafka: Offline Partition Count'
+      type: line
+      streams:
+      - group_function: average
+        summary_function: sum
+        tags:
+        - name: source
+          grouped: true
+        - name: host
+          dynamic: true
+        metric: kafka.controller.KafkaController.OfflinePartitionsCount
+    - name: 'Kafka: Leader Election Rate And Time Ms'
+      type: line
+      streams:
+      - group_function: average
+        summary_function: sum
+        tags:
+        - name: source
+          grouped: true
+        - name: host
+          dynamic: true
+        metric: kafka.controller.ControllerStats.LeaderElectionRateAndTimeMs.count
+    - name: 'Kafka: Disk Free Space'
+      type: line
+      streams:
+      - group_function: average
+        summary_function: average
+        tags:
+        - name: mount_point
+          values:
+          - "/opt/kafka/data"
+        - name: "@host"
+          grouped: true
+        metric: system.disk.percent.free
+    - name: 'Kafka: Active Controller Count'
+      type: line
+      streams:
+      - group_function: average
+        summary_function: average
+        tags:
+        - name: source
+          grouped: true
+        metric: kafka.controller.KafkaController.ActiveControllerCount
+    - name: Zookeeper Min Latency
+      type: line
+      streams:
+      - group_function: min
+        summary_function: min
+        tags:
+        - name: "@host"
+          grouped: true
+        metric: zookeeper.min_latency
+    - name: 'Zookeeper: Outstanding Requests'
+      type: line
+      streams:
+      - group_function: max
+        summary_function: max
+        tags:
+        - name: "@host"
+          grouped: true
+        metric: zookeeper.outstanding_requests
+    - name: 'Zookeeper: Pending Syncs'
+      type: line
+      streams:
+      - group_function: max
+        summary_function: max
+        tags:
+        - name: "@host"
+          grouped: true
+        metric: zookeeper.pending_syncs
+    layout:
+    - col: 1
+      row: 1
+      width: 4
+      height: 2
+    - col: 5
+      row: 1
+      width: 4
+      height: 2
+    - col: 9
+      row: 1
+      width: 4
+      height: 2
+    - col: 1
+      row: 3
+      width: 4
+      height: 2
+    - col: 5
+      row: 3
+      width: 4
+      height: 2
+    - col: 9
+      row: 3
+      width: 4
+      height: 2
+    - col: 1
+      row: 5
+      width: 4
+      height: 2
+    - col: 5
+      row: 5
+      width: 4
+      height: 2
+

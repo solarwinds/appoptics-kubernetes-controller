@@ -1,0 +1,28 @@
+apiVersion: "appoptics.io/v1"
+kind: "Alert"
+metadata:
+  name: "exampleAlert"
+  namespace: default
+  kind: "Alert"
+spec:
+  namespace: "default"
+  token: ""
+  data: |-
+    {
+        "name": "Kafka: Active Controller Count",
+        "description": "ActiveControllerCount",
+        "conditions": [
+            {
+                "type": "below",
+                "metric_name": "kafka.controller.KafkaController.ActiveControllerCount",
+                "source": null,
+                "threshold": 1,
+                "duration": 60,
+                "summary_function": "count"
+            }
+        ],
+        "services": [],
+        "attributes": {"services": ["exampleService"]},
+        "active": true,
+        "rearm_seconds": 120
+    }
