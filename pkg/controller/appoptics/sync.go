@@ -1,4 +1,4 @@
-package checks
+package appoptics
 
 import (
 	aoApi "github.com/appoptics/appoptics-api-go"

@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/appoptics/appoptics-kubernetes-controller/pkg/controller/checks"
 	"k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/util/runtime"
+	"github.com/appoptics/appoptics-kubernetes-controller/pkg/controller/appoptics"
 )
 
 const (
@@ -64,7 +64,7 @@ func (c *Controller) syncHandler(key string) error {
 		updateStatus := dashboard.Status.DeepCopy()
 		updateStatus.LastUpdated = currentTime.Format(DateFormat)
 
-		resourcesToSync := new(checks.ResourcesToSync)
+		resourcesToSync := new(appoptics.ResourcesToSync)
 		resourcesToSync.UpdateAppoptics(dashboard.Spec.Token)
 		updateStatus, err = resourcesToSync.SyncDashboard(dashboard.Spec, updateStatus)
 		if err != nil {
@@ -105,7 +105,7 @@ func (c *Controller) syncHandler(key string) error {
 		updateStatus := service.Status.DeepCopy()
 		updateStatus.LastUpdated = currentTime.Format(DateFormat)
 
-		resourcesToSync := new(checks.ResourcesToSync)
+		resourcesToSync := new(appoptics.ResourcesToSync)
 		resourcesToSync.UpdateAppoptics(service.Spec.Token)
 		updateStatus, err = resourcesToSync.SyncService(service.Spec, updateStatus)
 		if err != nil {
@@ -147,7 +147,7 @@ func (c *Controller) syncHandler(key string) error {
 		updateStatus := alert.Status.DeepCopy()
 		updateStatus.LastUpdated = currentTime.Format(DateFormat)
 
-		resourcesToSync := new(checks.ResourcesToSync)
+		resourcesToSync := new(appoptics.ResourcesToSync)
 		resourcesToSync.UpdateAppoptics(alert.Spec.Token)
 		updateStatus, err = resourcesToSync.SyncAlert(alert.Spec, updateStatus, c.serviceLister.Services(namespace))
 		if err != nil {

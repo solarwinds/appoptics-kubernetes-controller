@@ -1,4 +1,4 @@
-package checks
+package appoptics
 
 import (
 	"github.com/appoptics/appoptics-kubernetes-controller/pkg/apis/appoptics-kubernetes-controller/v1"
