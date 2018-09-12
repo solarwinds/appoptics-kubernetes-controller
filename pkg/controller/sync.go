@@ -64,9 +64,28 @@ func (c *Controller) syncHandler(key string) error {
 		updateStatus := dashboard.Status.DeepCopy()
 		updateStatus.LastUpdated = currentTime.Format(DateFormat)
 
-		resourcesToSync := new(appoptics.ResourcesToSync)
-		resourcesToSync.UpdateAppoptics(dashboard.Spec.Token)
-		updateStatus, err = resourcesToSync.SyncDashboard(dashboard.Spec, updateStatus)
+		synchronizer := appoptics.NewSyncronizer(dashboard.Spec.Token)
+		if dashboard.DeletionTimestamp != nil {
+			updateObj := dashboard.DeepCopy()
+			if len(updateObj.Finalizers) > 0 {
+				for i, v := range updateObj.Finalizers {
+					if v == "appoptics.io" {
+						err = synchronizer.RemoveDashboard(&updateObj.Status)
+						if err != nil {
+							return err
+						}
+						updateObj.Finalizers = append(updateObj.Finalizers[:i], updateObj.Finalizers[i+1:]...)
+						break
+					}
+				}
+			}
+			updateObj, err := c.aoclientset.AppopticsV1().Dashboards(namespace).Update(updateObj)
+			if err != nil {
+				return err
+			}
+			return nil
+		}
+		updateStatus, err = synchronizer.SyncDashboard(dashboard.Spec, updateStatus)
 		if err != nil {
 			return err
 		}
@@ -105,9 +124,28 @@ func (c *Controller) syncHandler(key string) error {
 		updateStatus := service.Status.DeepCopy()
 		updateStatus.LastUpdated = currentTime.Format(DateFormat)
 
-		resourcesToSync := new(appoptics.ResourcesToSync)
-		resourcesToSync.UpdateAppoptics(service.Spec.Token)
-		updateStatus, err = resourcesToSync.SyncService(service.Spec, updateStatus)
+		synchronizer := appoptics.NewSyncronizer(service.Spec.Token)
+		if service.DeletionTimestamp != nil {
+			updateObj := service.DeepCopy()
+			if len(updateObj.Finalizers) > 0 {
+				for i, v := range updateObj.Finalizers {
+					if v == "appoptics.io" {
+						err = synchronizer.RemoveService(&updateObj.Status)
+						if err != nil {
+							return err
+						}
+						updateObj.Finalizers = append(updateObj.Finalizers[:i], updateObj.Finalizers[i+1:]...)
+						break
+					}
+				}
+			}
+			updateObj, err := c.aoclientset.AppopticsV1().Services(namespace).Update(updateObj)
+			if err != nil {
+				return err
+			}
+			return nil
+		}
+		updateStatus, err = synchronizer.SyncService(service.Spec, updateStatus)
 		if err != nil {
 			return err
 		}
@@ -143,13 +181,32 @@ func (c *Controller) syncHandler(key string) error {
 				}
 			}
 		}
+		synchronizer := appoptics.NewSyncronizer(alert.Spec.Token)
 		// NEVER modify objects from the store. It's a read-only, local cache.
 		updateStatus := alert.Status.DeepCopy()
 		updateStatus.LastUpdated = currentTime.Format(DateFormat)
 
-		resourcesToSync := new(appoptics.ResourcesToSync)
-		resourcesToSync.UpdateAppoptics(alert.Spec.Token)
-		updateStatus, err = resourcesToSync.SyncAlert(alert.Spec, updateStatus, c.serviceLister.Services(namespace))
+		if alert.DeletionTimestamp != nil {
+			updateAlert := alert.DeepCopy()
+			if len(updateAlert.Finalizers) > 0 {
+				for i, v := range updateAlert.Finalizers {
+					if v == "appoptics.io" {
+						err = synchronizer.RemoveAlert(&updateAlert.Status)
+						if err != nil {
+							return err
+						}
+						updateAlert.Finalizers = append(updateAlert.Finalizers[:i], updateAlert.Finalizers[i+1:]...)
+						break
+					}
+				}
+			}
+			updateAlert, err := c.aoclientset.AppopticsV1().Alerts(namespace).Update(updateAlert)
+			if err != nil {
+				return err
+			}
+			return nil
+		}
+		updateStatus, err = synchronizer.SyncAlert(alert.Spec, updateStatus, c.serviceLister.Services(namespace))
 		if err != nil {
 			return err
 		}

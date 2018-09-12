@@ -5,7 +5,7 @@ import (
 	"reflect"
 )
 
-func (r *ResourcesToSync) syncService(service aoApi.Service, ID int) (int, error) {
+func (r *Synchronizer) syncService(service aoApi.Service, ID int) (int, error) {
 	servicesService := aoApi.NewServiceService(r.Client)
 	// If we dont have an ID for it then we assume its new and create it
 	if ID == 0 {
@@ -42,4 +42,15 @@ func (r *ResourcesToSync) syncService(service aoApi.Service, ID int) (int, error
 
 	return ID, nil
 
+}
+
+func (r *Synchronizer) removeService(ID int) error {
+	servicesService := aoApi.NewServiceService(r.Client)
+	if ID != 0 {
+		err := servicesService.Delete(ID)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }

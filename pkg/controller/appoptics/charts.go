@@ -24,7 +24,7 @@ func (c *ChartsService) DeleteAll(charts []*aoApi.Chart, spaceID int) error {
 	return nil
 }
 
-func (r *ResourcesToSync) syncCharts(dashCharts []*aoApi.Chart, spaceID int) error {
+func (r *Synchronizer) syncCharts(dashCharts []*aoApi.Chart, spaceID int) error {
 	chartsService := NewChartsService(r.Client)
 	aoCharts, err := chartsService.List(spaceID)
 	if err != nil {

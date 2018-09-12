@@ -24,7 +24,7 @@ func NewSpacesService(c *aoApi.Client) *SpacesService {
 	return &SpacesService{c.SpacesService(), c}
 }
 
-func (r *ResourcesToSync) syncSpace(dash CustomSpace, ID int) (int, error) {
+func (r *Synchronizer) syncSpace(dash CustomSpace, ID int) (int, error) {
 
 	spacesService := NewSpacesService(r.Client)
 	// If we dont have an ID for it then we assume its new and create it
@@ -82,4 +82,18 @@ func (s *SpacesService) create(name string) (*aoApi.Space, error) {
 	id, err := strconv.Atoi(idStr)
 
 	return &aoApi.Space{ID: id, Name: name}, nil
+}
+
+func (r *Synchronizer) removeDashboard(ID int) error {
+
+	spacesService := NewSpacesService(r.Client)
+	// If we dont have an ID for it then we assume its new and create it
+	if ID != 0 {
+		err := spacesService.Delete(ID)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+
 }

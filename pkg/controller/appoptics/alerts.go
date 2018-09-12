@@ -28,7 +28,7 @@ func NewAlertsService(c *aoApi.Client) *AlertsService {
 	return &AlertsService{*aoApi.NewAlertsService(c), *c}
 }
 
-func (r *ResourcesToSync) syncAlert(alert AlertRequest, ID int) (int, error) {
+func (r *Synchronizer) syncAlert(alert AlertRequest, ID int) (int, error) {
 	alertsService := NewAlertsService(r.Client)
 	// If we dont have an ID for it then we assume its new and create it
 	if ID == 0 {
@@ -66,6 +66,19 @@ func (r *ResourcesToSync) syncAlert(alert AlertRequest, ID int) (int, error) {
 	return ID, nil
 }
 
+func (r *Synchronizer) removeAlert(ID int) error {
+	alertsService := NewAlertsService(r.Client)
+	// If we dont have an ID for it then we assume its new and create it
+	if ID != 0 {
+		// Lets ensure that the ID we have exists in AppOptics
+		err := alertsService.DeleteCustom(ID)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func (as *AlertsService) CreateCustom(a *AlertRequest) (*aoApi.Alert, error) {
 	req, err := as.client.NewRequest("POST", "alerts", a)
 	if err != nil {
@@ -85,6 +98,16 @@ func (as *AlertsService) CreateCustom(a *AlertRequest) (*aoApi.Alert, error) {
 func (as *AlertsService) UpdateCustom(a *AlertRequest) error {
 	path := fmt.Sprintf("alerts/%d", *a.ID)
 	req, err := as.client.NewRequest("PUT", path, a)
+	_, err = as.client.Do(req, nil)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (as *AlertsService) DeleteCustom(ID int) error {
+	path := fmt.Sprintf("alerts/%d", ID)
+	req, err := as.client.NewRequest("DELETE", path, nil)
 	_, err = as.client.Do(req, nil)
 	if err != nil {
 		return err

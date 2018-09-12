@@ -1,8 +1,10 @@
 apiVersion: "appoptics.io/v1"
 kind: "Dashboard"
 metadata:
-  name: "exampledashboard"
+  name: exampledashboard
   namespace: default
+  finalizers:
+  - appoptics.io
 spec:
   namespace: "default"
   token: ""
