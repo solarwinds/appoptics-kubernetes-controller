@@ -66,7 +66,7 @@ func (r *Synchronizer) syncAlert(alert AlertRequest, ID int) (int, error) {
 	return ID, nil
 }
 
-func (r *Synchronizer) removeAlert(ID int) error {
+func (r *Synchronizer) RemoveAlert(ID int) error {
 	alertsService := NewAlertsService(r.Client)
 	// If we dont have an ID for it then we assume its new and create it
 	if ID != 0 {

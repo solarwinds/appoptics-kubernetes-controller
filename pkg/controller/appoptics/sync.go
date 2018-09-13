@@ -13,18 +13,15 @@ type Synchronizer struct {
 }
 
 type AO interface {
-	SyncDashboard(v1.TokenAndDataSpec, *v1.TimestampAndIdStatus) (*v1.TimestampAndIdStatus, error)
+	SyncSpace(v1.TokenAndDataSpec, *v1.TimestampAndIdStatus) (*v1.TimestampAndIdStatus, error)
 	syncSpace(CustomSpace, int) (int, error)
 	SyncService(v1.TokenAndDataSpec, *v1.TimestampAndIdStatus) (*v1.TimestampAndIdStatus, error)
 	syncService(aoApi.Service, int) (int, error)
 	SyncAlert(v1.TokenAndDataSpec, *v1.TimestampAndIdStatus, listers.ServiceNamespaceLister) (*v1.TimestampAndIdStatus, error)
 	syncAlert(AlertRequest, int) (int, error)
-	RemoveAlert(*v1.TimestampAndIdStatus) error
-	removeAlert(int) error
-	RemoveService(*v1.TimestampAndIdStatus) error
-	removeService(int) error
-	RemoveDashboard(*v1.TimestampAndIdStatus) error
-	removeDashboard(int) error
+	RemoveAlert(int) error
+	RemoveService(int) error
+	RemoveSpace(int) error
 }
 
 func NewSyncronizer(token string) Synchronizer{
@@ -34,7 +31,7 @@ func NewSyncronizer(token string) Synchronizer{
 }
 
 
-func (r *Synchronizer) SyncDashboard(spec v1.TokenAndDataSpec, status *v1.TimestampAndIdStatus) (*v1.TimestampAndIdStatus, error) {
+func (r *Synchronizer) SyncSpace(spec v1.TokenAndDataSpec, status *v1.TimestampAndIdStatus) (*v1.TimestampAndIdStatus, error) {
 	var dash CustomSpace
 	err := yaml.Unmarshal([]byte(spec.Data), &dash)
 	if err != nil {
@@ -112,33 +109,6 @@ func (r *Synchronizer) SyncAlert(spec v1.TokenAndDataSpec, status *v1.TimestampA
 		status.ID = ID
 	}
 	return status, nil
-}
-
-func (r *Synchronizer) RemoveAlert(status *v1.TimestampAndIdStatus) error {
-		// Sync Alert
-	err := r.removeAlert(status.ID)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func (r *Synchronizer) RemoveDashboard(status *v1.TimestampAndIdStatus) error {
-		// Sync Alert
-	err := r.removeDashboard(status.ID)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func (r *Synchronizer) RemoveService(status *v1.TimestampAndIdStatus) error {
-		// Sync Alert
-	err := r.removeService(status.ID)
-	if err != nil {
-		return err
-	}
-	return nil
 }
 
 func CheckIfErrorIsAppOpticsNotFoundError(err error) (bool) {

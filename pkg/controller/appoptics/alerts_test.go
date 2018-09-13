@@ -8,6 +8,9 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/client-go/tools/cache"
 	v13 "k8s.io/api/core/v1"
+	"github.com/gorilla/mux"
+	"strconv"
+	"strings"
 )
 
 // serviceNamespaceLister implements the ServiceNamespaceLister
@@ -35,9 +38,10 @@ func testIndexFunc(obj interface{}) ([]string, error) {
 	pod := obj.(v13.Pod)
 	return []string{pod.Labels["foo"]}, nil
 }
+const errorName = "Error"
 
 func TestExistingAlertSyncSuccess(t *testing.T){
-	rts := ResourcesToSync{client}
+
 	indexer := cache.NewIndexer(cache.MetaNamespaceKeyFunc, cache.Indexers{"testmodes": testIndexFunc})
 
 	msl := mockServiceLister{namespace:"test", indexer:indexer}
@@ -65,7 +69,7 @@ func TestExistingAlertSyncSuccess(t *testing.T){
 	ts := v1.TimestampAndIdStatus{ID: 3, LastUpdated: "Yesterday"}
 	td := v1.TokenAndDataSpec{Namespace: "Default", Data: data, Token: "blah"}
 
-	ts1, err := rts.SyncAlert(td, &ts, &msl)
+	ts1, err := syncronizer.SyncAlert(td, &ts, &msl)
 	if err != nil {
 		t.Errorf("error running TestExistingServiceSync: %v", err)
 	}
@@ -74,44 +78,64 @@ func TestExistingAlertSyncSuccess(t *testing.T){
 }
 
 func TestExistingAlertNotInAppOpticsSyncSuccess(t *testing.T){
-	rts := ResourcesToSync{client}
-	indexer := cache.NewIndexer(cache.MetaNamespaceKeyFunc, cache.Indexers{"testmodes": testIndexFunc})
-
-	msl := mockServiceLister{namespace:"test", indexer:indexer}
-
-	data := `
-               {
-        "name": "TEST",
-        "description": "ActiveControllerCount",
-        "conditions": [
-            {
-                "type": "below",
-                "metric_name": "kafka.controller.KafkaController.ActiveControllerCount",
-                "source": null,
-                "threshold": 1,
-                "duration": 60,
-                "summary_function": "count"
-            }
-        ],
-        "services": [],
-        "attributes": {"services": ["example"]},
-        "active": true,
-        "rearm_seconds": 120
-    }
-`
-	ts := v1.TimestampAndIdStatus{ID: 3, LastUpdated: "Yesterday"}
-	td := v1.TokenAndDataSpec{Namespace: "Default", Data: data, Token: "blah"}
-
-	ts1, err := rts.SyncAlert(td, &ts, &msl)
+	testName := "testName"
+	ts1, err := syncronizer.syncAlert(AlertRequest{Name:&testName}, testNotFoundId)
 	if err != nil {
 		t.Errorf("error running TestExistingServiceSync: %v", err)
 	}
 
-	assert.Equal(t, ts1.ID, ts.ID)
+	assert.NotEqual(t, ts1, testNotFoundId)
+}
+
+func TestExistingAlertNotInAppOpticsSyncFailure(t *testing.T){
+	testErrorName := errorName
+	_, err := syncronizer.syncAlert(AlertRequest{Name:&testErrorName}, testNotFoundId)
+	assert.NotEqual(t, nil, err)
+}
+
+
+func TestNewAlertSyncSuccess(t *testing.T){
+	testName := "newAlert"
+	ID, err := syncronizer.syncAlert(AlertRequest{Name:&testName}, 0)
+	assert.Equal(t, nil, err)
+	assert.NotEqual(t, 0, ID)
+}
+
+func TestNewAlertSyncFailure(t *testing.T){
+	testName := "Error"
+	ID, err := syncronizer.syncAlert(AlertRequest{Name:&testName}, 0)
+	assert.NotEqual(t, nil, err)
+	assert.Equal(t, -1, ID)
+}
+
+func TestDeletingAlertSuccessSync(t *testing.T) {
+	err := syncronizer.RemoveAlert(1)
+	if err != nil {
+		t.Errorf("error running TestSpacesSync: %v", err)
+	}
+
+	assert.Equal(t, nil, err)
+}
+
+func TestDeletingAlertErrorSync(t *testing.T) {
+	err := syncronizer.RemoveAlert(testInternalServerErrorId)
+
+	assert.Equal(t, err.Error(), `{"errors":{"request":["Internal Server Error"]}}`)
 }
 
 func CreateAlertHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		var alertRequest AlertRequest
+		err := JsonValidateAndDecode(r.Body, &alertRequest)
+
+		if err != nil {
+			http.Error(w, "Malformed Data", http.StatusInternalServerError)
+		}
+
+		if strings.Compare(*alertRequest.Name, "Error") == 0 {
+			http.Error(w, `{"errors":{"request":["Internal Server Error"]}}`, http.StatusInternalServerError)
+			return
+		}
 		responseBody := `{
    "id":1234567,
    "name":"production.web.frontend.response_time",
@@ -162,7 +186,12 @@ func CreateAlertHandler() http.HandlerFunc {
 
 func RetrieveAlertHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-
+		vars := mux.Vars(r)
+		ID := vars["alertId"]
+		if ID == strconv.Itoa(testNotFoundId) {
+			http.Error(w, `{"errors":{"request":["Not Found"]}}`, http.StatusNotFound)
+			return
+		}
 		responseBody := `{
   "id": 123,
   "name": "production.web.frontend.response_time",
@@ -213,6 +242,29 @@ func RetrieveAlertHandler() http.HandlerFunc {
 
 func UpdateAlertHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+		ID := vars["alertId"]
+		if ID == strconv.Itoa(testInternalServerErrorId) {
+			http.Error(w, `{"errors":{"request":["Not Found"]}}`, http.StatusNotFound)
+			return
+		}
 		w.WriteHeader(http.StatusNoContent)
+	}
+}
+
+func DeleteAlertHandler() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+		ID, err := strconv.Atoi(vars["alertId"])
+		if err != nil {
+			http.Error(w, `{"errors":{"request":["Internal Server Error"]}}`, http.StatusInternalServerError)
+			return
+		}
+		if ID == testInternalServerErrorId {
+			http.Error(w, `{"errors":{"request":["Internal Server Error"]}}`, http.StatusInternalServerError)
+			return
+		}
+		w.WriteHeader(http.StatusOK)
+		return;
 	}
 }

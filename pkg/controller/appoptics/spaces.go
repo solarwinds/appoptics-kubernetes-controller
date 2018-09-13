@@ -84,7 +84,7 @@ func (s *SpacesService) create(name string) (*aoApi.Space, error) {
 	return &aoApi.Space{ID: id, Name: name}, nil
 }
 
-func (r *Synchronizer) removeDashboard(ID int) error {
+func (r *Synchronizer) RemoveSpace(ID int) error {
 
 	spacesService := NewSpacesService(r.Client)
 	// If we dont have an ID for it then we assume its new and create it

@@ -71,8 +71,6 @@ func TestFailDeletingChartsInAppOptics(t *testing.T) {
 }
 
 func TestSyncingChartsWithAppOptics(t *testing.T) {
-	rts := ResourcesToSync{client}
-
 	data := `
                
                  - name: I am a test chart
@@ -91,7 +89,7 @@ func TestSyncingChartsWithAppOptics(t *testing.T) {
 	if err != nil {
 		t.Errorf("error running TestSpacesSync: %v", err)
 	}
-	err = rts.syncCharts(charts, 0)
+	err = syncronizer.syncCharts(charts, 0)
 	if err != nil {
 		t.Errorf("error running TestSpacesSync: %v", err)
 	}
@@ -100,8 +98,6 @@ func TestSyncingChartsWithAppOptics(t *testing.T) {
 }
 
 func TestSyncingChartsWithAppOpticsListErrorResponse(t *testing.T) {
-	rts := ResourcesToSync{client}
-
 	data := `
                  
                  - name: I am a test chart
@@ -120,15 +116,13 @@ func TestSyncingChartsWithAppOpticsListErrorResponse(t *testing.T) {
 	if err != nil {
 		t.Errorf("error running TestSpacesSync: %v", err)
 	}
-	err = rts.syncCharts(charts, testNotFoundId)
+	err = syncronizer.syncCharts(charts, testNotFoundId)
 	assert.NotEqual(t, nil, err)
 	assert.Equal(t, `{"errors":{"request":["Test Error"]}}`, err.Error())
 }
 
 
 func TestSyncingChartsWithAppOpticsDeletingOldChartsErrorResponse(t *testing.T) {
-	rts := ResourcesToSync{client}
-
 	data := `
                  
                  - name: I am a test chart
@@ -147,7 +141,7 @@ func TestSyncingChartsWithAppOpticsDeletingOldChartsErrorResponse(t *testing.T) 
 	if err != nil {
 		t.Errorf("error running TestSpacesSync: %v", err)
 	}
-	err = rts.syncCharts(charts, testInternalServerErrorId)
+	err = syncronizer.syncCharts(charts, testInternalServerErrorId)
 	assert.NotEqual(t,nil ,err.Error())
 	assert.Equal(t,`{"errors":{"request":["Internal Server Error"]}}`,err.Error())
 

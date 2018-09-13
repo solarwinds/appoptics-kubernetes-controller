@@ -14,7 +14,7 @@ import (
 
 // This tests an Existing Service in AppOptics being successfully updates
 func TestExistingServiceSyncSuccess(t *testing.T) {
-	rts := ResourcesToSync{client}
+	
 	ts := v1.TimestampAndIdStatus{ID: 1, LastUpdated: "Yesterday"}
 
 	data := `
@@ -29,7 +29,7 @@ func TestExistingServiceSyncSuccess(t *testing.T) {
 
 	td := v1.TokenAndDataSpec{Namespace: "Default", Data: data, Token: "blah"}
 
-	ts1, err := rts.SyncService(td, &ts)
+	ts1, err := syncronizer.SyncService(td, &ts)
 	if err != nil {
 		t.Errorf("error running TestExistingServiceSync: %v", err)
 	}
@@ -40,7 +40,7 @@ func TestExistingServiceSyncSuccess(t *testing.T) {
 // This tests an Existing Service failing to be updated
 func TestUpdateExistingServicesSyncFailure(t *testing.T) {
 
-	rts := ResourcesToSync{client}
+	
 	ts := v1.TimestampAndIdStatus{ID: 3, LastUpdated: "Yesterday"}
 
 	data := `{
@@ -54,14 +54,14 @@ func TestUpdateExistingServicesSyncFailure(t *testing.T) {
 
 	td := v1.TokenAndDataSpec{Namespace: "Default", Data: data, Token: "blah"}
 
-	_, err := rts.SyncService(td, &ts)
+	_, err := syncronizer.SyncService(td, &ts)
 	assert.NotEqual(t, nil, err)
 	assert.Equal(t, `{"errors":{"request":["Test Error"]}}`, err.Error())
 }
 
 // This tests a new service being creating in AppOptics
 func TestNewServiceSyncSuccess(t *testing.T) {
-	rts := ResourcesToSync{client}
+	
 	ts := v1.TimestampAndIdStatus{ID: 0, LastUpdated: "Yesterday"}
 
 	data := `
@@ -76,7 +76,7 @@ func TestNewServiceSyncSuccess(t *testing.T) {
 
 	td := v1.TokenAndDataSpec{Namespace: "Default", Data: data, Token: "blah"}
 
-	ts1, err := rts.SyncService(td, &ts)
+	ts1, err := syncronizer.SyncService(td, &ts)
 	if err != nil {
 		t.Errorf("error running TestExistingServiceSync: %v", err)
 	}
@@ -88,7 +88,7 @@ func TestNewServiceSyncSuccess(t *testing.T) {
 // Test recreating a Service that has been deleting in AO but exists as a CRD still
 func TestDeletedInAppopticsButNotInCRDServiceSyncSuccess(t *testing.T) {
 	newID := 145
-	rts := ResourcesToSync{client}
+	
 	ts := v1.TimestampAndIdStatus{ID: testNotFoundId, LastUpdated: "Yesterday"}
 
 	data := `
@@ -102,7 +102,7 @@ func TestDeletedInAppopticsButNotInCRDServiceSyncSuccess(t *testing.T) {
 
 	td := v1.TokenAndDataSpec{Namespace: "Default", Data: data, Token: "blah"}
 
-	ts1, err := rts.SyncService(td, &ts)
+	ts1, err := syncronizer.SyncService(td, &ts)
 	if err != nil {
 		t.Errorf("error running TestSpacesSync: %v", err)
 	}
@@ -114,7 +114,7 @@ func TestDeletedInAppopticsButNotInCRDServiceSyncSuccess(t *testing.T) {
 
 // Test the case that a new Service fails to create in AO
 func TestNewServiceCreateErrorInAppopticsFailure(t *testing.T) {
-	rts := ResourcesToSync{client}
+	
 	ts := v1.TimestampAndIdStatus{ID: 0, LastUpdated: "Yesterday"}
 
 	data := `
@@ -128,14 +128,14 @@ func TestNewServiceCreateErrorInAppopticsFailure(t *testing.T) {
 
 	td := v1.TokenAndDataSpec{Namespace: "Default", Data: data, Token: "blah"}
 
-	_, err := rts.SyncService(td, &ts)
+	_, err := syncronizer.SyncService(td, &ts)
 	assert.NotEqual(t, nil, err)
 	assert.Equal(t, `{"errors":{"request":["Test Error"]}}`, err.Error())
 }
 
 // Test recreating a Service that has been deleting in AO but exists as a CRD still but fails due to unknown AO Error
 func TestMissingServiceCreateErrorInAppopticsFailure(t *testing.T) {
-	rts := ResourcesToSync{client}
+	
 	ts := v1.TimestampAndIdStatus{ID: testNotFoundId, LastUpdated: "Yesterday"}
 
 	data := `
@@ -149,14 +149,14 @@ func TestMissingServiceCreateErrorInAppopticsFailure(t *testing.T) {
 
 	td := v1.TokenAndDataSpec{Namespace: "Default", Data: data, Token: "blah"}
 
-	_, err := rts.SyncService(td, &ts)
+	_, err := syncronizer.SyncService(td, &ts)
 	assert.NotEqual(t, nil, err)
 	assert.Equal(t, `{"errors":{"request":["Test Error"]}}`, err.Error())
 }
 
 // Test recreating a Service that has been deleting in AO but exists as a CRD still, then fails to create
 func TestOutOfSyncServiceCreateErrorThenRetrieveErrorInAppoptics(t *testing.T) {
-	rts := ResourcesToSync{client}
+	
 	ts := v1.TimestampAndIdStatus{ID: testInternalServerErrorId, LastUpdated: "Yesterday"}
 
 	data := `
@@ -169,10 +169,29 @@ func TestOutOfSyncServiceCreateErrorThenRetrieveErrorInAppoptics(t *testing.T) {
            }`
 	td := v1.TokenAndDataSpec{Namespace: "Default", Data: data, Token: "blah"}
 
-	_, err := rts.SyncService(td, &ts)
+	_, err := syncronizer.SyncService(td, &ts)
 	assert.NotEqual(t, nil, err)
 	assert.Equal(t, `{"errors":{"request":["Test Error"]}}`, err.Error())
 }
+
+
+
+func TestDeletingServiceSuccessSync(t *testing.T) {
+	err := syncronizer.RemoveService(1)
+	if err != nil {
+		t.Errorf("error running TestSpacesSync: %v", err)
+	}
+
+	assert.Equal(t, nil, err)
+}
+
+func TestDeletingServiceErrorSync(t *testing.T) {
+	err := syncronizer.RemoveService(testInternalServerErrorId)
+
+	assert.Equal(t, err.Error(), `{"errors":{"request":["Internal Server Error"]}}`)
+}
+
+
 func CreateServiceHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var service aoApi.Service
@@ -241,5 +260,22 @@ func UpdateServiceHandler() http.HandlerFunc {
 			return
 		}
 		w.WriteHeader(http.StatusNoContent)
+	}
+}
+
+func DeleteServiceHandler() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+		ID, err := strconv.Atoi(vars["serviceId"])
+		if err != nil {
+			http.Error(w, `{"errors":{"request":["Internal Server Error"]}}`, http.StatusInternalServerError)
+			return
+		}
+		if ID == testInternalServerErrorId {
+			http.Error(w, `{"errors":{"request":["Internal Server Error"]}}`, http.StatusInternalServerError)
+			return
+		}
+		w.WriteHeader(http.StatusOK)
+		return;
 	}
 }

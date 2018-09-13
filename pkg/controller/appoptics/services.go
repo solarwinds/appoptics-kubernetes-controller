@@ -44,7 +44,7 @@ func (r *Synchronizer) syncService(service aoApi.Service, ID int) (int, error) {
 
 }
 
-func (r *Synchronizer) removeService(ID int) error {
+func (r *Synchronizer) RemoveService(ID int) error {
 	servicesService := aoApi.NewServiceService(r.Client)
 	if ID != 0 {
 		err := servicesService.Delete(ID)

@@ -70,7 +70,7 @@ func (c *Controller) syncHandler(key string) error {
 			if len(updateObj.Finalizers) > 0 {
 				for i, v := range updateObj.Finalizers {
 					if v == "appoptics.io" {
-						err = synchronizer.RemoveDashboard(&updateObj.Status)
+						err = synchronizer.RemoveSpace(updateObj.Status.ID)
 						if err != nil {
 							return err
 						}
@@ -85,7 +85,7 @@ func (c *Controller) syncHandler(key string) error {
 			}
 			return nil
 		}
-		updateStatus, err = synchronizer.SyncDashboard(dashboard.Spec, updateStatus)
+		updateStatus, err = synchronizer.SyncSpace(dashboard.Spec, updateStatus)
 		if err != nil {
 			return err
 		}
@@ -130,7 +130,7 @@ func (c *Controller) syncHandler(key string) error {
 			if len(updateObj.Finalizers) > 0 {
 				for i, v := range updateObj.Finalizers {
 					if v == "appoptics.io" {
-						err = synchronizer.RemoveService(&updateObj.Status)
+						err = synchronizer.RemoveService(updateObj.Status.ID)
 						if err != nil {
 							return err
 						}
@@ -187,20 +187,20 @@ func (c *Controller) syncHandler(key string) error {
 		updateStatus.LastUpdated = currentTime.Format(DateFormat)
 
 		if alert.DeletionTimestamp != nil {
-			updateAlert := alert.DeepCopy()
-			if len(updateAlert.Finalizers) > 0 {
-				for i, v := range updateAlert.Finalizers {
+			updateObj := alert.DeepCopy()
+			if len(updateObj.Finalizers) > 0 {
+				for i, v := range updateObj.Finalizers {
 					if v == "appoptics.io" {
-						err = synchronizer.RemoveAlert(&updateAlert.Status)
+						err = synchronizer.RemoveAlert(updateObj.Status.ID)
 						if err != nil {
 							return err
 						}
-						updateAlert.Finalizers = append(updateAlert.Finalizers[:i], updateAlert.Finalizers[i+1:]...)
+						updateObj.Finalizers = append(updateObj.Finalizers[:i], updateObj.Finalizers[i+1:]...)
 						break
 					}
 				}
 			}
-			updateAlert, err := c.aoclientset.AppopticsV1().Alerts(namespace).Update(updateAlert)
+			updateObj, err := c.aoclientset.AppopticsV1().Alerts(namespace).Update(updateObj)
 			if err != nil {
 				return err
 			}

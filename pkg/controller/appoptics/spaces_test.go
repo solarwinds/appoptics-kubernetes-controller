@@ -13,8 +13,7 @@ import (
 	"strconv"
 )
 
-const newSpaceError = "NewSpaceError"
-const updateSpaceError = "UpdateSpaceError"
+const spaceError = "spaceError"
 
 func TestSpacesService_Create(t *testing.T) {
 	space, err := NewSpacesService(client).create("CPUs")
@@ -28,7 +27,6 @@ func TestSpacesService_Create(t *testing.T) {
 }
 
 func TestExistingSpacesSync(t *testing.T) {
-	rts := ResourcesToSync{client}
 	ts := v1.TimestampAndIdStatus{ID: 1, LastUpdated: "Yesterday"}
 
 	data := `
@@ -39,7 +37,7 @@ charts:
 
 	td := v1.TokenAndDataSpec{Namespace: "Default", Data: data, Token: "blah"}
 
-	ts1, err := rts.SyncDashboard(td, &ts)
+	ts1, err := syncronizer.SyncSpace(td, &ts)
 	if err != nil {
 		t.Errorf("error running TestSpacesSync: %v", err)
 	}
@@ -49,7 +47,7 @@ charts:
 
 func TestNewSpacesSync(t *testing.T) {
 
-	rts := ResourcesToSync{client}
+
 	ts := v1.TimestampAndIdStatus{ID: 0, LastUpdated: "Yesterday"}
 
 	data := `
@@ -60,7 +58,7 @@ charts:
 
 	td := v1.TokenAndDataSpec{Namespace: "Default", Data: data, Token: "blah"}
 
-	ts1, err := rts.SyncDashboard(td, &ts)
+	ts1, err := syncronizer.SyncSpace(td, &ts)
 	if err != nil {
 		t.Errorf("error running TestSpacesSync: %v", err)
 	}
@@ -71,7 +69,6 @@ charts:
 func TestDeletedInAppopticsButNotInCRDSpacesSync(t *testing.T) {
 	invalidID := testNotFoundId
 	newID := 1
-	rts := ResourcesToSync{client}
 	ts := v1.TimestampAndIdStatus{ID: invalidID, LastUpdated: "Yesterday"}
 
 	data := `
@@ -82,7 +79,7 @@ charts:
 
 	td := v1.TokenAndDataSpec{Namespace: "Default", Data: data, Token: "blah"}
 
-	ts1, err := rts.SyncDashboard(td, &ts)
+	ts1, err := syncronizer.SyncSpace(td, &ts)
 	if err != nil {
 		t.Errorf("error running TestSpacesSync: %v", err)
 	}
@@ -93,76 +90,70 @@ charts:
 }
 
 func TestNewSpaceCreateErrorInAppoptics(t *testing.T) {
-	rts := ResourcesToSync{client}
 	ts := v1.TimestampAndIdStatus{ID: 0, LastUpdated: "Yesterday"}
 
 	data := `
 ---
-name: `+newSpaceError+`
+name: `+spaceError+`
 charts:
 `
 
 	td := v1.TokenAndDataSpec{Namespace: "Default", Data: data, Token: "blah"}
 
-	_, err := rts.SyncDashboard(td, &ts)
+	_, err := syncronizer.SyncSpace(td, &ts)
 	assert.NotEqual(t, nil, err)
 	assert.Equal(t, `{"errors":{"request":["Internal Server Error"]}}`, err.Error())
 }
 
 func TestOutOfSyncSpaceCreateErrorInAppoptics(t *testing.T) {
-	rts := ResourcesToSync{client}
 	ts := v1.TimestampAndIdStatus{ID: testNotFoundId, LastUpdated: "Yesterday"}
 
 	data := `
 ---
-name: `+newSpaceError+`
+name: `+spaceError+`
 charts:
 `
 	td := v1.TokenAndDataSpec{Namespace: "Default", Data: data, Token: "blah"}
 
-	_, err := rts.SyncDashboard(td, &ts)
+	_, err := syncronizer.SyncSpace(td, &ts)
 	assert.NotEqual(t, nil, err)
 	assert.Equal(t, `{"errors":{"request":["Internal Server Error"]}}`, err.Error())
 }
 
 func TestOutOfSyncSpaceCreateErrorThenRetrieveErrorInAppoptics(t *testing.T) {
-	rts := ResourcesToSync{client}
 	ts := v1.TimestampAndIdStatus{ID: testInternalServerErrorId, LastUpdated: "Yesterday"}
 
 	data := `
 ---
-name: `+newSpaceError+`
+name: `+spaceError+`
 charts:
 `
 	td := v1.TokenAndDataSpec{Namespace: "Default", Data: data, Token: "blah"}
 
-	_, err := rts.SyncDashboard(td, &ts)
+	_, err := syncronizer.SyncSpace(td, &ts)
 	assert.NotEqual(t, nil, err)
 	assert.Equal(t, `{"errors":{"request":["Internal Server Error"]}}`, err.Error())
 }
 
 func TestUpdateSpacesErrorsSync(t *testing.T) {
 
-	rts := ResourcesToSync{client}
 	ts := v1.TimestampAndIdStatus{ID: 3, LastUpdated: "Yesterday"}
 
 	data := `
 ---
-name: `+updateSpaceError+`
+name: `+spaceError+`
 charts:
 `
 
 	td := v1.TokenAndDataSpec{Namespace: "Default", Data: data, Token: "blah"}
 
-	_, err := rts.SyncDashboard(td, &ts)
+	_, err := syncronizer.SyncSpace(td, &ts)
 	assert.NotEqual(t, nil, err)
-	assert.Equal(t, `{"errors":{"request":["`+updateSpaceError+`"]}}`, err.Error())
+	assert.Equal(t, `{"errors":{"request":["`+spaceError+`"]}}`, err.Error())
 }
 
 func TestExistingSpacesFailsChartSync(t *testing.T) {
-	rts := ResourcesToSync{client}
 	ts := v1.TimestampAndIdStatus{ID: 1, LastUpdated: "Yesterday"}
-
 	data := `
 ---
 name: DevOps Alerts
@@ -182,7 +173,22 @@ charts:
 
 	td := v1.TokenAndDataSpec{Namespace: "Default", Data: data, Token: "blah"}
 
-	_, err := rts.SyncDashboard(td, &ts)
+	_, err := syncronizer.SyncSpace(td, &ts)
+
+	assert.Equal(t, err.Error(), `{"errors":{"request":["Internal Server Error"]}}`)
+}
+
+func TestDeletingSpaceSuccessSync(t *testing.T) {
+	err := syncronizer.RemoveSpace(1)
+	if err != nil {
+		t.Errorf("error running TestSpacesSync: %v", err)
+	}
+
+	assert.Equal(t, nil, err)
+}
+
+func TestDeletingSpaceErrorSync(t *testing.T) {
+	err := syncronizer.RemoveSpace(testInternalServerErrorId)
 
 	assert.Equal(t, err.Error(), `{"errors":{"request":["Internal Server Error"]}}`)
 }
@@ -196,7 +202,7 @@ func CreateSpaceHandler() http.HandlerFunc {
 			http.Error(w, "Malformed Data", http.StatusInternalServerError)
 		}
 
-		if strings.Compare(simpleSpace.Name, newSpaceError) == 0 {
+		if strings.Compare(simpleSpace.Name, spaceError) == 0 {
 			http.Error(w, `{"errors":{"request":["Internal Server Error"]}}`, http.StatusInternalServerError)
 			return
 		}
@@ -260,8 +266,8 @@ func UpdateSpaceHandler() http.HandlerFunc {
 			return
 		}
 
-		if strings.Compare(simpleSpace.Name, updateSpaceError) == 0 {
-			http.Error(w, `{"errors":{"request":["`+updateSpaceError+`"]}}`, http.StatusInternalServerError)
+		if strings.Compare(simpleSpace.Name, spaceError) == 0 {
+			http.Error(w, `{"errors":{"request":["`+spaceError+`"]}}`, http.StatusInternalServerError)
 			return
 		}
 		responseBody := `{
@@ -269,6 +275,23 @@ func UpdateSpaceHandler() http.HandlerFunc {
 }`
 
 		w.Write([]byte(responseBody))
+	}
+}
+
+func DeleteSpaceHandler() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+		ID, err := strconv.Atoi(vars["id"])
+		if err != nil {
+			http.Error(w, `{"errors":{"request":["Internal Server Error"]}}`, http.StatusInternalServerError)
+			return
+		}
+		if ID == testInternalServerErrorId {
+			http.Error(w, `{"errors":{"request":["Internal Server Error"]}}`, http.StatusInternalServerError)
+			return
+		}
+		w.WriteHeader(http.StatusOK)
+		return;
 	}
 }
 
@@ -301,3 +324,4 @@ func JsonValidateAndDecode(body io.ReadCloser, v interface{}) error {
 	//No errors occurred
 	return nil
 }
+
