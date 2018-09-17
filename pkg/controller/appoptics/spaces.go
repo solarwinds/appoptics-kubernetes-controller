@@ -2,7 +2,6 @@ package appoptics
 
 import (
 	aoApi "github.com/appoptics/appoptics-api-go"
-	"strconv"
 	"strings"
 )
 
@@ -29,7 +28,7 @@ func (r *Synchronizer) syncSpace(dash CustomSpace, ID int) (int, error) {
 	spacesService := NewSpacesService(r.Client)
 	// If we dont have an ID for it then we assume its new and create it
 	if ID == 0 {
-		space, err := spacesService.create(dash.Name)
+		space, err := spacesService.Create(dash.Name)
 		if err != nil {
 			return -1, err
 		}
@@ -40,7 +39,7 @@ func (r *Synchronizer) syncSpace(dash CustomSpace, ID int) (int, error) {
 		if err != nil {
 			// If its a not found error thats ok we can try to create it now
 			if CheckIfErrorIsAppOpticsNotFoundError(err) {
-				space, err := spacesService.create(dash.Name)
+				space, err := spacesService.Create(dash.Name)
 				if err != nil {
 					return -1, err
 				}
@@ -61,27 +60,6 @@ func (r *Synchronizer) syncSpace(dash CustomSpace, ID int) (int, error) {
 
 	return ID, nil
 
-}
-
-func (s *SpacesService) create(name string) (*aoApi.Space, error) {
-	newSpace := &SimpleSpace{Name: name}
-
-	req, err := s.client.NewRequest("POST", "spaces", newSpace)
-	if err != nil {
-		return nil, err
-	}
-
-	res, err := s.client.Do(req, newSpace)
-	if err != nil {
-		return nil, err
-	}
-
-	idHeaderValue := res.Header.Get("Location")
-	idStartIdx := strings.LastIndex(idHeaderValue, "/")
-	idStr := idHeaderValue[idStartIdx+1:]
-	id, err := strconv.Atoi(idStr)
-
-	return &aoApi.Space{ID: id, Name: name}, nil
 }
 
 func (r *Synchronizer) RemoveSpace(ID int) error {

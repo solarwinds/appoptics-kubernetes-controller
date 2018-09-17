@@ -6,19 +6,24 @@ import (
 	"github.com/appoptics/appoptics-kubernetes-controller/pkg/apis/appoptics-kubernetes-controller/v1"
 	listers "github.com/appoptics/appoptics-kubernetes-controller/pkg/client/listers/appoptics-kubernetes-controller/v1"
 	"strings"
+	"crypto/sha1"
+	"io"
+	"bytes"
+	"encoding/json"
 )
 
 type Synchronizer struct {
 	Client *aoApi.Client
 }
 
+
 type AO interface {
-	SyncSpace(v1.TokenAndDataSpec, *v1.TimestampAndIdStatus) (*v1.TimestampAndIdStatus, error)
+	SyncSpace(v1.TokenAndDataSpec, *v1.Status) (*v1.Status, error)
 	syncSpace(CustomSpace, int) (int, error)
-	SyncService(v1.TokenAndDataSpec, *v1.TimestampAndIdStatus) (*v1.TimestampAndIdStatus, error)
-	syncService(aoApi.Service, int) (int, error)
-	SyncAlert(v1.TokenAndDataSpec, *v1.TimestampAndIdStatus, listers.ServiceNamespaceLister) (*v1.TimestampAndIdStatus, error)
-	syncAlert(AlertRequest, int) (int, error)
+	SyncService(v1.TokenAndDataSpec, *v1.Status) (*v1.Status, error)
+	syncService(aoApi.Alert, *v1.Status) (*v1.Status, error)
+	SyncAlert(v1.TokenAndDataSpec, *v1.Status, listers.ServiceNamespaceLister) (*v1.Status, error)
+	syncAlert(aoApi.Alert, *v1.Status, bool) (*v1.Status, error)
 	RemoveAlert(int) error
 	RemoveService(int) error
 	RemoveSpace(int) error
@@ -31,7 +36,7 @@ func NewSyncronizer(token string) Synchronizer{
 }
 
 
-func (r *Synchronizer) SyncSpace(spec v1.TokenAndDataSpec, status *v1.TimestampAndIdStatus) (*v1.TimestampAndIdStatus, error) {
+func (r *Synchronizer) SyncSpace(spec v1.TokenAndDataSpec, status *v1.Status) (*v1.Status, error) {
 	var dash CustomSpace
 	err := yaml.Unmarshal([]byte(spec.Data), &dash)
 	if err != nil {
@@ -50,7 +55,7 @@ func (r *Synchronizer) SyncSpace(spec v1.TokenAndDataSpec, status *v1.TimestampA
 
 	// Sync Charts
 	if dash.Charts != nil && len(dash.Charts) > 0 {
-		err = r.syncCharts(dash.Charts, status.ID)
+		err = r.syncCharts(dash.Charts, ID)
 		if err != nil {
 			return nil, err
 		}
@@ -59,7 +64,7 @@ func (r *Synchronizer) SyncSpace(spec v1.TokenAndDataSpec, status *v1.TimestampA
 	return status, nil
 }
 
-func (r *Synchronizer) SyncService(spec v1.TokenAndDataSpec, status *v1.TimestampAndIdStatus) (*v1.TimestampAndIdStatus, error) {
+func (r *Synchronizer) SyncService(spec v1.TokenAndDataSpec, status *v1.Status) (*v1.Status, error) {
 	var service aoApi.Service
 	err := yaml.Unmarshal([]byte(spec.Data), &service)
 	if err != nil {
@@ -67,32 +72,35 @@ func (r *Synchronizer) SyncService(spec v1.TokenAndDataSpec, status *v1.Timestam
 	}
 
 	// Sync Service
-	ID, err := r.syncService(service, status.ID)
-	if err != nil {
-		return nil, err
-	}
-
-	if ID != status.ID {
-		status.ID = ID
-	}
-	return status, nil
+	return r.syncService(service, status)
 }
 
-func (r *Synchronizer) SyncAlert(spec v1.TokenAndDataSpec, status *v1.TimestampAndIdStatus, serviceNamespaceLister listers.ServiceNamespaceLister) (*v1.TimestampAndIdStatus, error) {
-	var customAlert AlertRequest
-	err := yaml.Unmarshal([]byte(spec.Data), &customAlert)
+func (r *Synchronizer) SyncAlert(spec v1.TokenAndDataSpec, status *v1.Status, serviceNamespaceLister listers.ServiceNamespaceLister) (*v1.Status, error) {
+	specString, err := json.Marshal(spec)
 	if err != nil {
 		return nil, err
 	}
-	var notificationServices []*int
+	specHash := Hash([]byte(specString))
+	specChanged := bytes.Compare(specHash, status.Hashes.Spec) != 0
+	if specChanged {
+		status.Hashes.Spec = specHash
+	}
+	var customAlert aoApi.Alert
+	err = yaml.Unmarshal([]byte(spec.Data), &customAlert)
+	if err != nil {
+		return nil, err
+	}
+
+	var notificationServices []*aoApi.Service
 	if services, ok := customAlert.Attributes["services"]; ok {
-		for _, serviceObj := range services {
-			service, err := serviceNamespaceLister.Get(serviceObj)
+		for _, serviceObj := range services.([]interface{}) {
+			serviceStr := serviceObj.(string)
+			service, err := serviceNamespaceLister.Get(serviceStr)
 			if err != err {
 				return nil, err
 			}
 			if service != nil && service.Status.ID != 0 {
-				notificationServices = append(notificationServices, &service.Status.ID)
+				notificationServices = append(notificationServices, &aoApi.Service{ID:&service.Status.ID})
 			}
 		}
 	}
@@ -100,14 +108,11 @@ func (r *Synchronizer) SyncAlert(spec v1.TokenAndDataSpec, status *v1.TimestampA
 	customAlert.Services = notificationServices
 
 	// Sync Alert
-	ID, err := r.syncAlert(customAlert, status.ID)
+	status, err = r.syncAlert(customAlert, status, specChanged)
 	if err != nil {
 		return nil, err
 	}
 
-	if ID != status.ID {
-		status.ID = ID
-	}
 	return status, nil
 }
 
@@ -124,4 +129,10 @@ func CheckIfErrorIsAppOpticsNotFoundError(err error) (bool) {
 		}
 	}
 	return false
+}
+
+func Hash(s []byte) []byte {
+	h := sha1.New()
+	io.WriteString(h, string(s))
+	return h.Sum(nil)
 }

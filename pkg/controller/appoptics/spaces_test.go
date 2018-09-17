@@ -16,7 +16,7 @@ import (
 const spaceError = "spaceError"
 
 func TestSpacesService_Create(t *testing.T) {
-	space, err := NewSpacesService(client).create("CPUs")
+	space, err := NewSpacesService(client).Create("CPUs")
 	if err != nil {
 		t.Errorf("error running Create: %v", err)
 	}
@@ -27,7 +27,7 @@ func TestSpacesService_Create(t *testing.T) {
 }
 
 func TestExistingSpacesSync(t *testing.T) {
-	ts := v1.TimestampAndIdStatus{ID: 1, LastUpdated: "Yesterday"}
+	ts := v1.Status{ID: 1, LastUpdated: "Yesterday"}
 
 	data := `
 ---
@@ -48,7 +48,7 @@ charts:
 func TestNewSpacesSync(t *testing.T) {
 
 
-	ts := v1.TimestampAndIdStatus{ID: 0, LastUpdated: "Yesterday"}
+	ts := v1.Status{ID: 0, LastUpdated: "Yesterday"}
 
 	data := `
 ---
@@ -69,7 +69,7 @@ charts:
 func TestDeletedInAppopticsButNotInCRDSpacesSync(t *testing.T) {
 	invalidID := testNotFoundId
 	newID := 1
-	ts := v1.TimestampAndIdStatus{ID: invalidID, LastUpdated: "Yesterday"}
+	ts := v1.Status{ID: invalidID, LastUpdated: "Yesterday"}
 
 	data := `
 ---
@@ -90,7 +90,7 @@ charts:
 }
 
 func TestNewSpaceCreateErrorInAppoptics(t *testing.T) {
-	ts := v1.TimestampAndIdStatus{ID: 0, LastUpdated: "Yesterday"}
+	ts := v1.Status{ID: 0, LastUpdated: "Yesterday"}
 
 	data := `
 ---
@@ -106,7 +106,7 @@ charts:
 }
 
 func TestOutOfSyncSpaceCreateErrorInAppoptics(t *testing.T) {
-	ts := v1.TimestampAndIdStatus{ID: testNotFoundId, LastUpdated: "Yesterday"}
+	ts := v1.Status{ID: testNotFoundId, LastUpdated: "Yesterday"}
 
 	data := `
 ---
@@ -121,7 +121,7 @@ charts:
 }
 
 func TestOutOfSyncSpaceCreateErrorThenRetrieveErrorInAppoptics(t *testing.T) {
-	ts := v1.TimestampAndIdStatus{ID: testInternalServerErrorId, LastUpdated: "Yesterday"}
+	ts := v1.Status{ID: testInternalServerErrorId, LastUpdated: "Yesterday"}
 
 	data := `
 ---
@@ -137,7 +137,7 @@ charts:
 
 func TestUpdateSpacesErrorsSync(t *testing.T) {
 
-	ts := v1.TimestampAndIdStatus{ID: 3, LastUpdated: "Yesterday"}
+	ts := v1.Status{ID: 3, LastUpdated: "Yesterday"}
 
 	data := `
 ---
@@ -153,7 +153,7 @@ charts:
 }
 
 func TestExistingSpacesFailsChartSync(t *testing.T) {
-	ts := v1.TimestampAndIdStatus{ID: 1, LastUpdated: "Yesterday"}
+	ts := v1.Status{ID: 1, LastUpdated: "Yesterday"}
 	data := `
 ---
 name: DevOps Alerts

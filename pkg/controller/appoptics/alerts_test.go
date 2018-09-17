@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"testing"
 	"github.com/appoptics/appoptics-kubernetes-controller/pkg/apis/appoptics-kubernetes-controller/v1"
+	aoApi "github.com/appoptics/appoptics-api-go"
 	"github.com/stretchr/testify/assert"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/client-go/tools/cache"
@@ -29,7 +30,7 @@ func (s mockServiceLister) List(selector labels.Selector) (ret []*v1.Service, er
 }
 
 func (msl *mockServiceLister) Get (name string) (*v1.Service, error){
-	tss := v1.TimestampAndIdStatus{ID:1}
+	tss := v1.Status{ID:1}
 	service := v1.Service{Status:tss}
 	return &service, nil
 }
@@ -66,7 +67,7 @@ func TestExistingAlertSyncSuccess(t *testing.T){
         "rearm_seconds": 120
     }
 `
-	ts := v1.TimestampAndIdStatus{ID: 3, LastUpdated: "Yesterday"}
+	ts := v1.Status{ID: 3, LastUpdated: "Yesterday"}
 	td := v1.TokenAndDataSpec{Namespace: "Default", Data: data, Token: "blah"}
 
 	ts1, err := syncronizer.SyncAlert(td, &ts, &msl)
@@ -79,7 +80,7 @@ func TestExistingAlertSyncSuccess(t *testing.T){
 
 func TestExistingAlertNotInAppOpticsSyncSuccess(t *testing.T){
 	testName := "testName"
-	ts1, err := syncronizer.syncAlert(AlertRequest{Name:&testName}, testNotFoundId)
+	ts1, err := syncronizer.syncAlert(aoApi.Alert{Name:&testName}, &v1.Status{ID:testNotFoundId}, true)
 	if err != nil {
 		t.Errorf("error running TestExistingServiceSync: %v", err)
 	}
@@ -89,23 +90,22 @@ func TestExistingAlertNotInAppOpticsSyncSuccess(t *testing.T){
 
 func TestExistingAlertNotInAppOpticsSyncFailure(t *testing.T){
 	testErrorName := errorName
-	_, err := syncronizer.syncAlert(AlertRequest{Name:&testErrorName}, testNotFoundId)
+	_, err := syncronizer.syncAlert(aoApi.Alert{Name:&testErrorName}, &v1.Status{ID:testNotFoundId}, true)
 	assert.NotEqual(t, nil, err)
 }
 
 
 func TestNewAlertSyncSuccess(t *testing.T){
 	testName := "newAlert"
-	ID, err := syncronizer.syncAlert(AlertRequest{Name:&testName}, 0)
+	ID, err := syncronizer.syncAlert(aoApi.Alert{Name:&testName}, &v1.Status{ID:0}, true)
 	assert.Equal(t, nil, err)
 	assert.NotEqual(t, 0, ID)
 }
 
 func TestNewAlertSyncFailure(t *testing.T){
 	testName := "Error"
-	ID, err := syncronizer.syncAlert(AlertRequest{Name:&testName}, 0)
+	_, err := syncronizer.syncAlert(aoApi.Alert{Name:&testName}, &v1.Status{ID:0}, true)
 	assert.NotEqual(t, nil, err)
-	assert.Equal(t, -1, ID)
 }
 
 func TestDeletingAlertSuccessSync(t *testing.T) {
@@ -125,14 +125,14 @@ func TestDeletingAlertErrorSync(t *testing.T) {
 
 func CreateAlertHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var alertRequest AlertRequest
-		err := JsonValidateAndDecode(r.Body, &alertRequest)
+		var alert aoApi.Alert
+		err := JsonValidateAndDecode(r.Body, &alert)
 
 		if err != nil {
 			http.Error(w, "Malformed Data", http.StatusInternalServerError)
 		}
 
-		if strings.Compare(*alertRequest.Name, "Error") == 0 {
+		if strings.Compare(*alert.Name, "Error") == 0 {
 			http.Error(w, `{"errors":{"request":["Internal Server Error"]}}`, http.StatusInternalServerError)
 			return
 		}

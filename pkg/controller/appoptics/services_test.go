@@ -15,7 +15,7 @@ import (
 // This tests an Existing Service in AppOptics being successfully updates
 func TestExistingServiceSyncSuccess(t *testing.T) {
 	
-	ts := v1.TimestampAndIdStatus{ID: 1, LastUpdated: "Yesterday"}
+	ts := v1.Status{ID: 1, LastUpdated: "Yesterday"}
 
 	data := `
            {
@@ -41,7 +41,7 @@ func TestExistingServiceSyncSuccess(t *testing.T) {
 func TestUpdateExistingServicesSyncFailure(t *testing.T) {
 
 	
-	ts := v1.TimestampAndIdStatus{ID: 3, LastUpdated: "Yesterday"}
+	ts := v1.Status{ID: 3, LastUpdated: "Yesterday"}
 
 	data := `{
   "id": 145,
@@ -62,7 +62,7 @@ func TestUpdateExistingServicesSyncFailure(t *testing.T) {
 // This tests a new service being creating in AppOptics
 func TestNewServiceSyncSuccess(t *testing.T) {
 	
-	ts := v1.TimestampAndIdStatus{ID: 0, LastUpdated: "Yesterday"}
+	ts := v1.Status{ID: 0, LastUpdated: "Yesterday"}
 
 	data := `
            {
@@ -89,7 +89,7 @@ func TestNewServiceSyncSuccess(t *testing.T) {
 func TestDeletedInAppopticsButNotInCRDServiceSyncSuccess(t *testing.T) {
 	newID := 145
 	
-	ts := v1.TimestampAndIdStatus{ID: testNotFoundId, LastUpdated: "Yesterday"}
+	ts := v1.Status{ID: testNotFoundId, LastUpdated: "Yesterday"}
 
 	data := `
            {
@@ -115,7 +115,7 @@ func TestDeletedInAppopticsButNotInCRDServiceSyncSuccess(t *testing.T) {
 // Test the case that a new Service fails to create in AO
 func TestNewServiceCreateErrorInAppopticsFailure(t *testing.T) {
 	
-	ts := v1.TimestampAndIdStatus{ID: 0, LastUpdated: "Yesterday"}
+	ts := v1.Status{ID: 0, LastUpdated: "Yesterday"}
 
 	data := `
            {
@@ -136,7 +136,7 @@ func TestNewServiceCreateErrorInAppopticsFailure(t *testing.T) {
 // Test recreating a Service that has been deleting in AO but exists as a CRD still but fails due to unknown AO Error
 func TestMissingServiceCreateErrorInAppopticsFailure(t *testing.T) {
 	
-	ts := v1.TimestampAndIdStatus{ID: testNotFoundId, LastUpdated: "Yesterday"}
+	ts := v1.Status{ID: testNotFoundId, LastUpdated: "Yesterday"}
 
 	data := `
            {
@@ -157,7 +157,7 @@ func TestMissingServiceCreateErrorInAppopticsFailure(t *testing.T) {
 // Test recreating a Service that has been deleting in AO but exists as a CRD still, then fails to create
 func TestOutOfSyncServiceCreateErrorThenRetrieveErrorInAppoptics(t *testing.T) {
 	
-	ts := v1.TimestampAndIdStatus{ID: testInternalServerErrorId, LastUpdated: "Yesterday"}
+	ts := v1.Status{ID: testInternalServerErrorId, LastUpdated: "Yesterday"}
 
 	data := `
            {

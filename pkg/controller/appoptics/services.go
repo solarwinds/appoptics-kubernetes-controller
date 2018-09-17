@@ -2,46 +2,62 @@ package appoptics
 
 import (
 	aoApi "github.com/appoptics/appoptics-api-go"
+	"github.com/appoptics/appoptics-kubernetes-controller/pkg/apis/appoptics-kubernetes-controller/v1"
 	"reflect"
+	"encoding/json"
+	"time"
 )
 
-func (r *Synchronizer) syncService(service aoApi.Service, ID int) (int, error) {
+func (r *Synchronizer) syncService(service aoApi.Service, status *v1.Status) (*v1.Status, error) {
 	servicesService := aoApi.NewServiceService(r.Client)
 	// If we dont have an ID for it then we assume its new and create it
-	if ID == 0 {
-		service, err := servicesService.Create(&service)
-		if err != nil {
-			return -1, err
-		}
-		ID = *service.ID
+	if status.ID == 0 {
+		return r.createService(service,status,servicesService)
 	} else {
 		// Lets ensure that the ID we have exists in AppOptics
-		aoService, err := servicesService.Retrieve(ID)
+		aoService, err := servicesService.Retrieve(status.ID)
 		if err != nil {
 			if CheckIfErrorIsAppOpticsNotFoundError(err) {
-				aoService, err := servicesService.Create(&service)
-				if err != nil {
-					return -1, err
-				}
-				ID = *aoService.ID
+				return r.createService(service,status,servicesService)
 			} else {
-				return -1, err
+				return nil, err
 			}
 		} else {
 			//Service exists in AppOptics now lets check that they are actually synced
-			service.ID = aoService.ID
+			service.ID = &status.ID
 			if !reflect.DeepEqual(&service, aoService) {
 				// Local vs Remote are different so update AO
 				err = servicesService.Update(&service)
 				if err != nil {
-					return -1, err
+					return nil, err
 				}
+				status.UpdatedAt = int(time.Now().Unix())
+				serviceJson, err := json.Marshal(aoService)
+				if err != nil {
+					return nil, err
+				}
+				status.Hashes.AppOptics = Hash(serviceJson)
 			}
 		}
 	}
 
-	return ID, nil
+	return status, nil
 
+}
+
+func (r *Synchronizer) createService (service aoApi.Service, status *v1.Status, servicesService *aoApi.ServicesService) (*v1.Status, error) {
+	aoService, err := servicesService.Create(&service)
+	if err != nil {
+		return nil, err
+	}
+	status.ID = *aoService.ID
+	status.UpdatedAt = int(time.Now().Unix())
+	hash, err := json.Marshal(aoService)
+	if err != nil {
+		return nil, err
+	}
+	status.Hashes.AppOptics = hash
+	return status, nil
 }
 
 func (r *Synchronizer) RemoveService(ID int) error {
