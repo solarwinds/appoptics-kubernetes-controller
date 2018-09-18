@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/appoptics/appoptics-kubernetes-controller/pkg/controller/appoptics"
+	"github.com/golang/glog"
 	"k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -54,7 +55,7 @@ func (c *Controller) syncHandler(key string) error {
 		if len(dashboard.Status.LastUpdated) > 0 {
 			lastUpdated, err := time.Parse(DateFormat, dashboard.Status.LastUpdated)
 			if err != nil {
-				//glog.Warningf("Error, date %s not in RFC1123Z format")
+				glog.Warningf("Error, date %s not in RFC1123Z format")
 			} else {
 				if currentTime.Unix()-lastUpdated.Unix() < c.resyncTime {
 					return nil
@@ -126,7 +127,7 @@ func (c *Controller) syncHandler(key string) error {
 		if len(service.Status.LastUpdated) > 0 {
 			lastUpdated, err := time.Parse(DateFormat, service.Status.LastUpdated)
 			if err != nil {
-				//glog.Warningf("Error, date %s not in RFC1123Z format")
+				glog.Warningf("Error, date %s not in RFC1123Z format")
 			} else {
 				if currentTime.Unix()-lastUpdated.Unix() < c.resyncTime {
 					return nil
@@ -198,7 +199,7 @@ func (c *Controller) syncHandler(key string) error {
 		if len(alert.Status.LastUpdated) > 0 {
 			lastUpdated, err := time.Parse(DateFormat, alert.Status.LastUpdated)
 			if err != nil {
-				//glog.Warningf("Error, date %s not in RFC1123Z format")
+				glog.Warningf("Error, date %s not in RFC1123Z format")
 			} else {
 				if currentTime.Unix()-lastUpdated.Unix() < c.resyncTime {
 					return nil

@@ -27,7 +27,7 @@ func TestExistingServiceSyncSuccess(t *testing.T) {
            }
 `
 
-	td := v1.TokenAndDataSpec{Namespace: "Default", Data: data, Token: "blah"}
+	td := v1.TokenAndDataSpec{Namespace: "Default", Data: data, Secret: "blah"}
 
 	ts1, err := syncronizer.SyncService(td, &ts)
 	if err != nil {
@@ -51,7 +51,7 @@ func TestUpdateExistingServicesSyncFailure(t *testing.T) {
   "title": "NewServiceError"
 }`
 
-	td := v1.TokenAndDataSpec{Namespace: "Default", Data: data, Token: "blah"}
+	td := v1.TokenAndDataSpec{Namespace: "Default", Data: data, Secret: "blah"}
 
 	_, err := syncronizer.SyncService(td, &ts)
 	assert.NotEqual(t, nil, err)
@@ -73,7 +73,7 @@ func TestNewServiceSyncSuccess(t *testing.T) {
            }
 `
 
-	td := v1.TokenAndDataSpec{Namespace: "Default", Data: data, Token: "blah"}
+	td := v1.TokenAndDataSpec{Namespace: "Default", Data: data, Secret: "blah"}
 
 	ts1, err := syncronizer.SyncService(td, &ts)
 	if err != nil {
@@ -99,7 +99,7 @@ func TestDeletedInAppopticsButNotInCRDServiceSyncSuccess(t *testing.T) {
                 "title": "TEST"
            }`
 
-	td := v1.TokenAndDataSpec{Namespace: "Default", Data: data, Token: "blah"}
+	td := v1.TokenAndDataSpec{Namespace: "Default", Data: data, Secret: "blah"}
 
 	ts1, err := syncronizer.SyncService(td, &ts)
 	if err != nil {
@@ -125,7 +125,7 @@ func TestNewServiceCreateErrorInAppopticsFailure(t *testing.T) {
                 "title": "NewServiceCreateError"
            }`
 
-	td := v1.TokenAndDataSpec{Namespace: "Default", Data: data, Token: "blah"}
+	td := v1.TokenAndDataSpec{Namespace: "Default", Data: data, Secret: "blah"}
 
 	_, err := syncronizer.SyncService(td, &ts)
 	assert.NotEqual(t, nil, err)
@@ -146,7 +146,7 @@ func TestMissingServiceCreateErrorInAppopticsFailure(t *testing.T) {
                 "title": "NewServiceCreateError"
            }`
 
-	td := v1.TokenAndDataSpec{Namespace: "Default", Data: data, Token: "blah"}
+	td := v1.TokenAndDataSpec{Namespace: "Default", Data: data, Secret: "blah"}
 
 	_, err := syncronizer.SyncService(td, &ts)
 	assert.NotEqual(t, nil, err)
@@ -166,7 +166,7 @@ func TestOutOfSyncServiceCreateErrorThenRetrieveErrorInAppoptics(t *testing.T) {
                 },
                 "title": "NewServiceCreateError"
            }`
-	td := v1.TokenAndDataSpec{Namespace: "Default", Data: data, Token: "blah"}
+	td := v1.TokenAndDataSpec{Namespace: "Default", Data: data, Secret: "blah"}
 
 	_, err := syncronizer.SyncService(td, &ts)
 	assert.NotEqual(t, nil, err)

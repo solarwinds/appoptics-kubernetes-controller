@@ -2,14 +2,11 @@ package appoptics
 
 import (
 	"bytes"
-	"crypto/sha1"
 	"encoding/json"
 	aoApi "github.com/appoptics/appoptics-api-go"
 	"github.com/appoptics/appoptics-kubernetes-controller/pkg/apis/appoptics-kubernetes-controller/v1"
 	listers "github.com/appoptics/appoptics-kubernetes-controller/pkg/client/listers/appoptics-kubernetes-controller/v1"
 	"github.com/ghodss/yaml"
-	"io"
-	"strings"
 )
 
 type Synchronizer struct {
@@ -18,9 +15,9 @@ type Synchronizer struct {
 
 type AO interface {
 	SyncSpace(v1.TokenAndDataSpec, *v1.Status) (*v1.Status, error)
-	syncSpace(CustomSpace, int) (int, error)
+	syncSpace(CustomSpace, *v1.Status) (*v1.Status, error)
 	SyncService(v1.TokenAndDataSpec, *v1.Status) (*v1.Status, error)
-	syncService(aoApi.Alert, *v1.Status) (*v1.Status, error)
+	syncService(aoApi.Service, *v1.Status) (*v1.Status, error)
 	SyncAlert(v1.TokenAndDataSpec, *v1.Status, listers.ServiceNamespaceLister) (*v1.Status, error)
 	syncAlert(aoApi.Alert, *v1.Status, bool) (*v1.Status, error)
 	RemoveAlert(int) error
@@ -126,29 +123,4 @@ func (r *Synchronizer) SyncAlert(spec v1.TokenAndDataSpec, status *v1.Status, se
 	}
 
 	return status, nil
-}
-
-func CheckIfErrorIsAppOpticsNotFoundError(err error) bool {
-	if errorResponse, ok := err.(*aoApi.ErrorResponse); ok {
-		errorObj := errorResponse.Errors.(map[string]interface{})
-		if requestErr, ok := errorObj["request"]; ok {
-			for _, errorType := range requestErr.([]interface{}) {
-				// The ID does not exist in AppOptics so create a new space
-				if strings.Compare(errorType.(string), "Not Found") == 0 {
-					return true
-				}
-			}
-		}
-	}
-	return false
-}
-
-func Hash(s interface{}) ([]byte, error) {
-	byteArr, err := json.Marshal(s)
-	if err != nil {
-		return nil, err
-	}
-	h := sha1.New()
-	io.WriteString(h, string(byteArr))
-	return h.Sum(nil), nil
 }

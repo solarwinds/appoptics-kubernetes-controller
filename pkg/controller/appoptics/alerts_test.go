@@ -69,7 +69,7 @@ func TestExistingAlertSyncSuccess(t *testing.T) {
     }
 `
 	ts := v1.Status{ID: 3, LastUpdated: "Yesterday"}
-	td := v1.TokenAndDataSpec{Namespace: "Default", Data: data, Token: "blah"}
+	td := v1.TokenAndDataSpec{Namespace: "Default", Data: data, Secret: "blah"}
 
 	ts1, err := syncronizer.SyncAlert(td, &ts, &msl)
 	if err != nil {

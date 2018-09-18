@@ -10,8 +10,8 @@ import (
 type Dashboard struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata"`
-	Spec              TokenAndDataSpec     `json:"spec"`
-	Status            Status `json:"status,omitempty"`
+	Spec              TokenAndDataSpec `json:"spec"`
+	Status            Status           `json:"status,omitempty"`
 }
 
 // +genclient
@@ -20,8 +20,8 @@ type Dashboard struct {
 type Service struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata"`
-	Spec              TokenAndDataSpec     `json:"spec"`
-	Status            Status `json:"status,omitempty"`
+	Spec              TokenAndDataSpec `json:"spec"`
+	Status            Status           `json:"status,omitempty"`
 }
 
 // +genclient
@@ -30,25 +30,25 @@ type Service struct {
 type Alert struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata"`
-	Spec              TokenAndDataSpec     `json:"spec"`
-	Status            Status `json:"status,omitempty"`
+	Spec              TokenAndDataSpec `json:"spec"`
+	Status            Status           `json:"status,omitempty"`
 }
 
 type TokenAndDataSpec struct {
 	Namespace string `json:"namespace"`
 	Data      string `json:"data"`
-	Secret     string `json:"secret"`
+	Secret    string `json:"secret"`
 }
 
 type Status struct {
 	LastUpdated string `json:"lastUpdated,omitempty"`
 	ID          int    `json:"id,omitempty"`
-	Hashes          Hashes    `json:"Hashes,omitempty"`
-	UpdatedAt          int    `json:"updatedAt,omitempty"`
+	Hashes      Hashes `json:"Hashes,omitempty"`
+	UpdatedAt   int    `json:"updatedAt,omitempty"`
 }
 
 type Hashes struct {
-	Spec []byte `json:spec,omitempty`
+	Spec      []byte `json:spec,omitempty`
 	AppOptics []byte `json:appoptics,omitempty`
 }
 

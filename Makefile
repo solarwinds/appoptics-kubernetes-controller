@@ -75,6 +75,8 @@ go_fmt:
 		exit 1; \
 	fi
 
+add_token:
+	kubectl --namespace $(NAMESPACE) create secret generic appoptics --from-literal=token=$(APPOPTICS_TOKEN)
 
 # Docker targets
 ################

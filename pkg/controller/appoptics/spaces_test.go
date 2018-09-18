@@ -35,7 +35,7 @@ name: DevOps Alerts
 charts:
 `
 
-	td := v1.TokenAndDataSpec{Namespace: "Default", Data: data, Token: "blah"}
+	td := v1.TokenAndDataSpec{Namespace: "Default", Data: data, Secret: "blah"}
 
 	ts1, err := syncronizer.SyncSpace(td, &ts)
 	if err != nil {
@@ -55,7 +55,7 @@ name: DevOps Alerts
 charts:
 `
 
-	td := v1.TokenAndDataSpec{Namespace: "Default", Data: data, Token: "blah"}
+	td := v1.TokenAndDataSpec{Namespace: "Default", Data: data, Secret: "blah"}
 
 	ts1, err := syncronizer.SyncSpace(td, &ts)
 	if err != nil {
@@ -76,7 +76,7 @@ name: DevOps Alerts
 charts:
 `
 
-	td := v1.TokenAndDataSpec{Namespace: "Default", Data: data, Token: "blah"}
+	td := v1.TokenAndDataSpec{Namespace: "Default", Data: data, Secret: "blah"}
 
 	ts1, err := syncronizer.SyncSpace(td, &ts)
 	if err != nil {
@@ -97,7 +97,7 @@ name: ` + spaceError + `
 charts:
 `
 
-	td := v1.TokenAndDataSpec{Namespace: "Default", Data: data, Token: "blah"}
+	td := v1.TokenAndDataSpec{Namespace: "Default", Data: data, Secret: "blah"}
 
 	_, err := syncronizer.SyncSpace(td, &ts)
 	assert.NotEqual(t, nil, err)
@@ -112,7 +112,7 @@ func TestOutOfSyncSpaceCreateErrorInAppoptics(t *testing.T) {
 name: ` + spaceError + `
 charts:
 `
-	td := v1.TokenAndDataSpec{Namespace: "Default", Data: data, Token: "blah"}
+	td := v1.TokenAndDataSpec{Namespace: "Default", Data: data, Secret: "blah"}
 
 	_, err := syncronizer.SyncSpace(td, &ts)
 	assert.NotEqual(t, nil, err)
@@ -127,7 +127,7 @@ func TestOutOfSyncSpaceCreateErrorThenRetrieveErrorInAppoptics(t *testing.T) {
 name: ` + spaceError + `
 charts:
 `
-	td := v1.TokenAndDataSpec{Namespace: "Default", Data: data, Token: "blah"}
+	td := v1.TokenAndDataSpec{Namespace: "Default", Data: data, Secret: "blah"}
 
 	_, err := syncronizer.SyncSpace(td, &ts)
 	assert.NotEqual(t, nil, err)
@@ -144,7 +144,7 @@ name: ` + spaceError + `
 charts:
 `
 
-	td := v1.TokenAndDataSpec{Namespace: "Default", Data: data, Token: "blah"}
+	td := v1.TokenAndDataSpec{Namespace: "Default", Data: data, Secret: "blah"}
 
 	_, err := syncronizer.SyncSpace(td, &ts)
 	assert.NotEqual(t, nil, err)
@@ -169,7 +169,7 @@ charts:
     composite: |
       s("rainy.days.are.bad", {})`
 
-	td := v1.TokenAndDataSpec{Namespace: "Default", Data: data, Token: "blah"}
+	td := v1.TokenAndDataSpec{Namespace: "Default", Data: data, Secret: "blah"}
 
 	_, err := syncronizer.SyncSpace(td, &ts)
 
