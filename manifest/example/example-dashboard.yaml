@@ -7,7 +7,7 @@ metadata:
   - appoptics.io
 spec:
   namespace: "default"
-  token: ""
+  secret: "appoptics"
   data: |-
     name: Kafka Dashboard
     charts:

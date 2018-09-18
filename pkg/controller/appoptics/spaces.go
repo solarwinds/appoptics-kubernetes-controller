@@ -3,6 +3,7 @@ package appoptics
 import (
 	aoApi "github.com/appoptics/appoptics-api-go"
 	"strings"
+	"github.com/appoptics/appoptics-kubernetes-controller/pkg/apis/appoptics-kubernetes-controller/v1"
 )
 
 type CustomSpace struct {
@@ -23,42 +24,42 @@ func NewSpacesService(c *aoApi.Client) *SpacesService {
 	return &SpacesService{c.SpacesService(), c}
 }
 
-func (r *Synchronizer) syncSpace(dash CustomSpace, ID int) (int, error) {
+func (r *Synchronizer) syncSpace(dash CustomSpace, status *v1.Status) (*v1.Status, error) {
 
 	spacesService := NewSpacesService(r.Client)
 	// If we dont have an ID for it then we assume its new and create it
-	if ID == 0 {
+	if status.ID == 0 {
 		space, err := spacesService.Create(dash.Name)
 		if err != nil {
-			return -1, err
+			return nil, err
 		}
-		ID = space.ID
+		status.ID = space.ID
 	} else {
 		// Lets ensure that the ID we have exists in AppOptics
-		aoSpace, err := spacesService.Retrieve(ID)
+		aoSpace, err := spacesService.Retrieve(status.ID)
 		if err != nil {
 			// If its a not found error thats ok we can try to create it now
 			if CheckIfErrorIsAppOpticsNotFoundError(err) {
 				space, err := spacesService.Create(dash.Name)
 				if err != nil {
-					return -1, err
+					return nil, err
 				}
-				ID = space.ID
+				status.ID = space.ID
 			} else {
-				return  -1, err
+				return  nil, err
 			}
 		} else {
 			//Service exists in AppOptics now lets check that they are actually synced
 			if strings.Compare(aoSpace.Name, dash.Name) != 0 {
-				_, err = spacesService.Update(ID, dash.Name)
+				_, err = spacesService.Update(status.ID, dash.Name)
 				if err != nil {
-					return -1, err
+					return nil, err
 				}
 			}
 		}
 	}
 
-	return ID, nil
+	return status, nil
 
 }
 

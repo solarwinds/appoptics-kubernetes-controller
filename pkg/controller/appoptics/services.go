@@ -36,7 +36,10 @@ func (r *Synchronizer) syncService(service aoApi.Service, status *v1.Status) (*v
 				if err != nil {
 					return nil, err
 				}
-				status.Hashes.AppOptics = Hash(serviceJson)
+				status.Hashes.AppOptics, err = Hash(serviceJson)
+				if err != nil {
+					return nil, err
+				}
 			}
 		}
 	}

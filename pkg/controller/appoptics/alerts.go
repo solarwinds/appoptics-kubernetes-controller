@@ -81,9 +81,20 @@ func (r *Synchronizer) syncAlert(alert aoApi.Alert, status *v1.Status, specChang
 }
 
 func (r *Synchronizer) createAlert(alert aoApi.Alert, status *v1.Status, alertsService *AlertsService) (*v1.Status, error) {
+	//Associate services
+	services := alert.Services
+	alert.Services = nil
+
 	aoAlert, err := alertsService.Create(&alert)
 	if err != nil {
 		return nil, err
+	}
+
+	for _, service := range services {
+		err = alertsService.AssociateToService(*aoAlert.ID, *service.ID)
+		if err != nil {
+			return nil, err
+		}
 	}
 	status.ID = *aoAlert.ID
 	status.UpdatedAt = *aoAlert.UpdatedAt
@@ -108,39 +119,3 @@ func (r *Synchronizer) RemoveAlert(ID int) error {
 	}
 	return nil
 }
-
-//func (as *AlertsService) CreateCustom(a *AlertRequest) (*aoApi.Alert, error) {
-//	req, err := as.client.NewRequest("POST", "alerts", a)
-//	if err != nil {
-//		return nil, err
-//	}
-//
-//	createdAlert := &aoApi.Alert{}
-//
-//	_, err = as.client.Do(req, createdAlert)
-//	if err != nil {
-//		return nil, err
-//	}
-//
-//	return createdAlert, nil
-//}
-//
-//func (as *AlertsService) UpdateCustom(a *AlertRequest) error {
-//	path := fmt.Sprintf("alerts/%d", *a.ID)
-//	req, err := as.client.NewRequest("PUT", path, a)
-//	_, err = as.client.Do(req, nil)
-//	if err != nil {
-//		return err
-//	}
-//	return nil
-//}
-//
-//func (as *AlertsService) DeleteCustom(ID int) error {
-//	path := fmt.Sprintf("alerts/%d", ID)
-//	req, err := as.client.NewRequest("DELETE", path, nil)
-//	_, err = as.client.Do(req, nil)
-//	if err != nil {
-//		return err
-//	}
-//	return nil
-//}

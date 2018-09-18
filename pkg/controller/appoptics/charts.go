@@ -47,3 +47,22 @@ func (r *Synchronizer) syncCharts(dashCharts []*aoApi.Chart, spaceID int) error 
 
 	return nil
 }
+
+func (r *Synchronizer) getChartHash(spaceID int) ([]byte, error) {
+	chartsService := NewChartsService(r.Client)
+
+	if spaceID == 0 {
+		return []byte(""), nil
+	}
+	aoCharts, err := chartsService.List(spaceID)
+	if err != nil {
+		return nil, err
+	}
+
+	// DELETE ALL AO CHARTS AND CREATE OURS
+	if aoCharts != nil && len(aoCharts) != 0 {
+		return Hash(aoCharts)
+	}
+
+	return []byte(""), nil
+}

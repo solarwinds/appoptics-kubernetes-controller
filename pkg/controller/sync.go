@@ -8,6 +8,8 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/util/runtime"
 	"github.com/appoptics/appoptics-kubernetes-controller/pkg/controller/appoptics"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 const (
@@ -64,7 +66,18 @@ func (c *Controller) syncHandler(key string) error {
 		updateStatus := dashboard.Status.DeepCopy()
 		updateStatus.LastUpdated = currentTime.Format(DateFormat)
 
-		synchronizer := appoptics.NewSyncronizer(dashboard.Spec.Token)
+		secret, err := c.kubeclientset.CoreV1().Secrets(namespace).Get(dashboard.Spec.Secret, metav1.GetOptions{})
+		if err != nil {
+			return err
+		}
+
+		synchronizer := appoptics.Synchronizer{}
+		if token, ok := secret.Data["token"]; ok {
+			synchronizer = appoptics.NewSyncronizer(string(token))
+		} else {
+			return errors.NewNotFound(schema.GroupResource{}, "token")
+		}
+
 		if dashboard.DeletionTimestamp != nil {
 			updateObj := dashboard.DeepCopy()
 			if len(updateObj.Finalizers) > 0 {
@@ -124,7 +137,18 @@ func (c *Controller) syncHandler(key string) error {
 		updateStatus := service.Status.DeepCopy()
 		updateStatus.LastUpdated = currentTime.Format(DateFormat)
 
-		synchronizer := appoptics.NewSyncronizer(service.Spec.Token)
+		secret, err := c.kubeclientset.CoreV1().Secrets(namespace).Get(service.Spec.Secret, metav1.GetOptions{})
+		if err != nil {
+			return err
+		}
+
+		synchronizer := appoptics.Synchronizer{}
+		if token, ok := secret.Data["token"]; ok {
+			synchronizer = appoptics.NewSyncronizer(string(token))
+		} else {
+			return errors.NewNotFound(schema.GroupResource{}, "token")
+		}
+
 		if service.DeletionTimestamp != nil {
 			updateObj := service.DeepCopy()
 			if len(updateObj.Finalizers) > 0 {
@@ -181,7 +205,17 @@ func (c *Controller) syncHandler(key string) error {
 				}
 			}
 		}
-		synchronizer := appoptics.NewSyncronizer(alert.Spec.Token)
+		secret, err := c.kubeclientset.CoreV1().Secrets(namespace).Get(alert.Spec.Secret, metav1.GetOptions{})
+		if err != nil {
+			return err
+		}
+
+		synchronizer := appoptics.Synchronizer{}
+		if token, ok := secret.Data["token"]; ok {
+			synchronizer = appoptics.NewSyncronizer(string(token))
+		} else {
+			return errors.NewNotFound(schema.GroupResource{}, "token")
+		}
 		// NEVER modify objects from the store. It's a read-only, local cache.
 		updateStatus := alert.Status.DeepCopy()
 		updateStatus.LastUpdated = currentTime.Format(DateFormat)

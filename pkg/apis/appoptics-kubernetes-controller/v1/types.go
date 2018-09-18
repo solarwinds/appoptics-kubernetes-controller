@@ -37,7 +37,7 @@ type Alert struct {
 type TokenAndDataSpec struct {
 	Namespace string `json:"namespace"`
 	Data      string `json:"data"`
-	Token     string `json:"token"`
+	Secret     string `json:"secret"`
 }
 
 type Status struct {

@@ -43,22 +43,34 @@ func (r *Synchronizer) SyncSpace(spec v1.TokenAndDataSpec, status *v1.Status) (*
 		return nil, err
 	}
 
+
 	// Sync Space aka Dashboard at a high level
-	ID, err := r.syncSpace(dash, status.ID)
+	status, err = r.syncSpace(dash, status)
 	if err != nil {
 		return nil, err
 	}
 
-	if ID != status.ID {
-		status.ID = ID
+	aoChartHash, err := r.getChartHash(status.ID)
+	if err != nil {
+		return nil, err
 	}
 
+	specHash, err := Hash(spec)
+	if err != nil {
+		return nil, err
+	}
 	// Sync Charts
-	if dash.Charts != nil && len(dash.Charts) > 0 {
-		err = r.syncCharts(dash.Charts, ID)
+	if bytes.Compare(status.Hashes.AppOptics, aoChartHash) != 0 || bytes.Compare(status.Hashes.Spec,specHash) != 0  {
+		err = r.syncCharts(dash.Charts, status.ID)
 		if err != nil {
 			return nil, err
 		}
+
+		status.Hashes.AppOptics, err = r.getChartHash(status.ID)
+		if err != nil {
+			return nil, err
+		}
+		status.Hashes.Spec = specHash
 	}
 
 	return status, nil
@@ -80,7 +92,10 @@ func (r *Synchronizer) SyncAlert(spec v1.TokenAndDataSpec, status *v1.Status, se
 	if err != nil {
 		return nil, err
 	}
-	specHash := Hash([]byte(specString))
+	specHash, err := Hash([]byte(specString))
+	if err != nil {
+		return nil, err
+	}
 	specChanged := bytes.Compare(specHash, status.Hashes.Spec) != 0
 	if specChanged {
 		status.Hashes.Spec = specHash
@@ -131,8 +146,12 @@ func CheckIfErrorIsAppOpticsNotFoundError(err error) (bool) {
 	return false
 }
 
-func Hash(s []byte) []byte {
+func Hash(s interface{}) ([]byte, error) {
+	byteArr, err := json.Marshal(s)
+	if err != nil {
+		return nil, err
+	}
 	h := sha1.New()
-	io.WriteString(h, string(s))
-	return h.Sum(nil)
+	io.WriteString(h, string(byteArr))
+	return h.Sum(nil), nil
 }
