@@ -2,8 +2,8 @@ package appoptics
 
 import (
 	aoApi "github.com/appoptics/appoptics-api-go"
-	"strings"
 	"github.com/appoptics/appoptics-kubernetes-controller/pkg/apis/appoptics-kubernetes-controller/v1"
+	"strings"
 )
 
 type CustomSpace struct {
@@ -46,7 +46,7 @@ func (r *Synchronizer) syncSpace(dash CustomSpace, status *v1.Status) (*v1.Statu
 				}
 				status.ID = space.ID
 			} else {
-				return  nil, err
+				return nil, err
 			}
 		} else {
 			//Service exists in AppOptics now lets check that they are actually synced

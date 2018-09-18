@@ -2,13 +2,14 @@ package appoptics
 
 import (
 	aoApi "github.com/appoptics/appoptics-api-go"
-	"net/http"
-	"testing"
 	"github.com/ghodss/yaml"
-	"github.com/stretchr/testify/assert"
 	"github.com/gorilla/mux"
+	"github.com/stretchr/testify/assert"
+	"net/http"
 	"strconv"
+	"testing"
 )
+
 func TestDeletingChartsInAppOptics(t *testing.T) {
 
 	chartsService := NewChartsService(client)
@@ -48,7 +49,7 @@ func TestFailDeletingChartsInAppOptics(t *testing.T) {
 	data := `
                  
                  - name: I am a test chart
-                   id: `+strconv.Itoa(testNotFoundId)+`
+                   id: ` + strconv.Itoa(testNotFoundId) + `
                    type: line
                    streams:
                    - summary_function: average
@@ -58,7 +59,6 @@ func TestFailDeletingChartsInAppOptics(t *testing.T) {
                        dynamic: true
                      composite: |
                        s("rainy.days.are.bad", {})`
-
 
 	var charts []*aoApi.Chart
 	err := yaml.Unmarshal([]byte(data), &charts)
@@ -121,12 +121,11 @@ func TestSyncingChartsWithAppOpticsListErrorResponse(t *testing.T) {
 	assert.Equal(t, `{"errors":{"request":["Test Error"]}}`, err.Error())
 }
 
-
 func TestSyncingChartsWithAppOpticsDeletingOldChartsErrorResponse(t *testing.T) {
 	data := `
                  
                  - name: I am a test chart
-                   id: `+strconv.Itoa(testNotFoundId)+`
+                   id: ` + strconv.Itoa(testNotFoundId) + `
                    type: line
                    streams:
                    - summary_function: average
@@ -142,8 +141,8 @@ func TestSyncingChartsWithAppOpticsDeletingOldChartsErrorResponse(t *testing.T) 
 		t.Errorf("error running TestSpacesSync: %v", err)
 	}
 	err = syncronizer.syncCharts(charts, testInternalServerErrorId)
-	assert.NotEqual(t,nil ,err.Error())
-	assert.Equal(t,`{"errors":{"request":["Internal Server Error"]}}`,err.Error())
+	assert.NotEqual(t, nil, err.Error())
+	assert.Equal(t, `{"errors":{"request":["Internal Server Error"]}}`, err.Error())
 
 }
 
@@ -154,7 +153,7 @@ func TestFailCreatingChartsInAppOptics(t *testing.T) {
 	data := `
                  
                  - name: I am a test chart
-                   id: `+strconv.Itoa(testNotFoundId)+`
+                   id: ` + strconv.Itoa(testNotFoundId) + `
                    type: line
                    streams:
                    - summary_function: average
@@ -164,7 +163,6 @@ func TestFailCreatingChartsInAppOptics(t *testing.T) {
                        dynamic: true
                      composite: |
                        s("rainy.days.are.bad", {})`
-
 
 	var charts []*aoApi.Chart
 	err := yaml.Unmarshal([]byte(data), &charts)
@@ -186,7 +184,7 @@ func ListChartsHandler() http.HandlerFunc {
 		}
 		responseBody := `[
   {
-    "id": `+ID+`,
+    "id": ` + ID + `,
     "name": "CPU Usage",
     "type": "line",
     "streams": [
@@ -239,12 +237,12 @@ func CreateChartHandler() http.HandlerFunc {
 			return
 		}
 		responseBody := `{
-  "id": `+strconv.Itoa(testNotFoundId)+`,
+  "id": ` + strconv.Itoa(testNotFoundId) + `,
   "name": "CPU Usage",
   "type": "line",
   "streams": [
     {
-      "id": `+strconv.Itoa(testNotFoundId)+`,
+      "id": ` + strconv.Itoa(testNotFoundId) + `,
       "metric": "cpu.percent.idle",
       "type": "gauge",
       "tags": [

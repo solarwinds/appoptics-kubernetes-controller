@@ -1,21 +1,20 @@
 package appoptics
 
 import (
+	"bytes"
+	"crypto/sha1"
+	"encoding/json"
 	aoApi "github.com/appoptics/appoptics-api-go"
-	"github.com/ghodss/yaml"
 	"github.com/appoptics/appoptics-kubernetes-controller/pkg/apis/appoptics-kubernetes-controller/v1"
 	listers "github.com/appoptics/appoptics-kubernetes-controller/pkg/client/listers/appoptics-kubernetes-controller/v1"
-	"strings"
-	"crypto/sha1"
+	"github.com/ghodss/yaml"
 	"io"
-	"bytes"
-	"encoding/json"
+	"strings"
 )
 
 type Synchronizer struct {
 	Client *aoApi.Client
 }
-
 
 type AO interface {
 	SyncSpace(v1.TokenAndDataSpec, *v1.Status) (*v1.Status, error)
@@ -29,12 +28,11 @@ type AO interface {
 	RemoveSpace(int) error
 }
 
-func NewSyncronizer(token string) Synchronizer{
+func NewSyncronizer(token string) Synchronizer {
 	client := aoApi.NewClient(token)
 	return Synchronizer{client}
 
 }
-
 
 func (r *Synchronizer) SyncSpace(spec v1.TokenAndDataSpec, status *v1.Status) (*v1.Status, error) {
 	var dash CustomSpace
@@ -42,7 +40,6 @@ func (r *Synchronizer) SyncSpace(spec v1.TokenAndDataSpec, status *v1.Status) (*
 	if err != nil {
 		return nil, err
 	}
-
 
 	// Sync Space aka Dashboard at a high level
 	status, err = r.syncSpace(dash, status)
@@ -60,7 +57,7 @@ func (r *Synchronizer) SyncSpace(spec v1.TokenAndDataSpec, status *v1.Status) (*
 		return nil, err
 	}
 	// Sync Charts
-	if bytes.Compare(status.Hashes.AppOptics, aoChartHash) != 0 || bytes.Compare(status.Hashes.Spec,specHash) != 0  {
+	if bytes.Compare(status.Hashes.AppOptics, aoChartHash) != 0 || bytes.Compare(status.Hashes.Spec, specHash) != 0 {
 		err = r.syncCharts(dash.Charts, status.ID)
 		if err != nil {
 			return nil, err
@@ -115,7 +112,7 @@ func (r *Synchronizer) SyncAlert(spec v1.TokenAndDataSpec, status *v1.Status, se
 				return nil, err
 			}
 			if service != nil && service.Status.ID != 0 {
-				notificationServices = append(notificationServices, &aoApi.Service{ID:&service.Status.ID})
+				notificationServices = append(notificationServices, &aoApi.Service{ID: &service.Status.ID})
 			}
 		}
 	}
@@ -131,7 +128,7 @@ func (r *Synchronizer) SyncAlert(spec v1.TokenAndDataSpec, status *v1.Status, se
 	return status, nil
 }
 
-func CheckIfErrorIsAppOpticsNotFoundError(err error) (bool) {
+func CheckIfErrorIsAppOpticsNotFoundError(err error) bool {
 	if errorResponse, ok := err.(*aoApi.ErrorResponse); ok {
 		errorObj := errorResponse.Errors.(map[string]interface{})
 		if requestErr, ok := errorObj["request"]; ok {

@@ -11,8 +11,8 @@ import (
 )
 
 var (
-	client *appoptics.Client
-	server *httptest.Server
+	client      *appoptics.Client
+	server      *httptest.Server
 	syncronizer Synchronizer
 )
 
@@ -24,7 +24,7 @@ func setup() {
 	server = httptest.NewServer(router)
 	serverURLWithVersion := fmt.Sprintf("%s/v1/", server.URL)
 	client = appoptics.NewClient("deadbeef", appoptics.BaseURLClientOption(serverURLWithVersion))
-	syncronizer = Synchronizer{Client:client}
+	syncronizer = Synchronizer{Client: client}
 }
 
 func teardown() {
@@ -57,7 +57,6 @@ func NewServerTestMux() *mux.Router {
 	router.Handle("/v1/services/{serviceId}", RetrieveServiceHandler()).Methods("GET")
 	router.Handle("/v1/services/{serviceId}", UpdateServiceHandler()).Methods("PUT")
 	router.Handle("/v1/services/{serviceId}", DeleteServiceHandler()).Methods("DELETE")
-
 
 	// Alerts
 	router.Handle("/v1/alerts", CreateAlertHandler()).Methods("POST")

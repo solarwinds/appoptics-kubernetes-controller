@@ -2,15 +2,15 @@ package appoptics
 
 import (
 	"encoding/json"
-	"github.com/gorilla/mux"
 	"github.com/appoptics/appoptics-kubernetes-controller/pkg/apis/appoptics-kubernetes-controller/v1"
+	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/assert"
 	"io"
 	"io/ioutil"
 	"net/http"
+	"strconv"
 	"strings"
 	"testing"
-	"strconv"
 )
 
 const spaceError = "spaceError"
@@ -46,7 +46,6 @@ charts:
 }
 
 func TestNewSpacesSync(t *testing.T) {
-
 
 	ts := v1.Status{ID: 0, LastUpdated: "Yesterday"}
 
@@ -94,7 +93,7 @@ func TestNewSpaceCreateErrorInAppoptics(t *testing.T) {
 
 	data := `
 ---
-name: `+spaceError+`
+name: ` + spaceError + `
 charts:
 `
 
@@ -110,7 +109,7 @@ func TestOutOfSyncSpaceCreateErrorInAppoptics(t *testing.T) {
 
 	data := `
 ---
-name: `+spaceError+`
+name: ` + spaceError + `
 charts:
 `
 	td := v1.TokenAndDataSpec{Namespace: "Default", Data: data, Token: "blah"}
@@ -125,7 +124,7 @@ func TestOutOfSyncSpaceCreateErrorThenRetrieveErrorInAppoptics(t *testing.T) {
 
 	data := `
 ---
-name: `+spaceError+`
+name: ` + spaceError + `
 charts:
 `
 	td := v1.TokenAndDataSpec{Namespace: "Default", Data: data, Token: "blah"}
@@ -141,7 +140,7 @@ func TestUpdateSpacesErrorsSync(t *testing.T) {
 
 	data := `
 ---
-name: `+spaceError+`
+name: ` + spaceError + `
 charts:
 `
 
@@ -159,7 +158,7 @@ func TestExistingSpacesFailsChartSync(t *testing.T) {
 name: DevOps Alerts
 charts:
 - name: I am a test chart
-  id: `+strconv.Itoa(testInternalServerErrorId)+`
+  id: ` + strconv.Itoa(testInternalServerErrorId) + `
   type: line
   streams:
   - summary_function: average
@@ -169,7 +168,6 @@ charts:
       dynamic: true
     composite: |
       s("rainy.days.are.bad", {})`
-
 
 	td := v1.TokenAndDataSpec{Namespace: "Default", Data: data, Token: "blah"}
 
@@ -232,7 +230,7 @@ func RetrieveSpaceHandler() http.HandlerFunc {
 			http.Error(w, `{"errors":{"request":["Internal Server Error"]}}`, http.StatusInternalServerError)
 			return
 		}
-			responseBody := `{
+		responseBody := `{
   "name": "CPUs",
   "id": ` + vars["id"] + `,
   "charts": [
@@ -250,8 +248,7 @@ func RetrieveSpaceHandler() http.HandlerFunc {
     }
   ]
 }`
-			w.Write([]byte(responseBody))
-
+		w.Write([]byte(responseBody))
 
 	}
 }
@@ -291,7 +288,7 @@ func DeleteSpaceHandler() http.HandlerFunc {
 			return
 		}
 		w.WriteHeader(http.StatusOK)
-		return;
+		return
 	}
 }
 
@@ -324,4 +321,3 @@ func JsonValidateAndDecode(body io.ReadCloser, v interface{}) error {
 	//No errors occurred
 	return nil
 }
-

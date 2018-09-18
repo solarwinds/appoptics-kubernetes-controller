@@ -4,12 +4,12 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/golang/glog"
 	clientset "github.com/appoptics/appoptics-kubernetes-controller/pkg/client/clientset/versioned"
 	"github.com/appoptics/appoptics-kubernetes-controller/pkg/client/clientset/versioned/scheme"
 	aoscheme "github.com/appoptics/appoptics-kubernetes-controller/pkg/client/clientset/versioned/scheme"
 	informers "github.com/appoptics/appoptics-kubernetes-controller/pkg/client/informers/externalversions"
 	listers "github.com/appoptics/appoptics-kubernetes-controller/pkg/client/listers/appoptics-kubernetes-controller/v1"
+	"github.com/golang/glog"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/util/runtime"
@@ -27,11 +27,11 @@ type Controller struct {
 	aoclientset     clientset.Interface
 	cachesSynced    []cache.InformerSynced
 	dashboardLister listers.DashboardLister
-	serviceLister listers.ServiceLister
-	alertLister   listers.AlertLister
-	workqueue     workqueue.RateLimitingInterface
-	recorder      record.EventRecorder
-	resyncTime    int64
+	serviceLister   listers.ServiceLister
+	alertLister     listers.AlertLister
+	workqueue       workqueue.RateLimitingInterface
+	recorder        record.EventRecorder
+	resyncTime      int64
 }
 
 // NewController returns a new controller
@@ -79,7 +79,7 @@ func NewController(
 	dashboardInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc: func(new interface{}) {
 			controller.enqueue(new, Dashboard)
-		},		UpdateFunc: func(old, new interface{}) {
+		}, UpdateFunc: func(old, new interface{}) {
 			controller.enqueue(new, Dashboard)
 		},
 	})
@@ -87,7 +87,7 @@ func NewController(
 	serviceInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc: func(new interface{}) {
 			controller.enqueue(new, Service)
-		},		UpdateFunc: func(old, new interface{}) {
+		}, UpdateFunc: func(old, new interface{}) {
 			controller.enqueue(new, Service)
 		},
 	})
@@ -176,7 +176,6 @@ func (c *Controller) enqueue(obj interface{}, kind string) {
 	c.workqueue.AddRateLimited(key)
 }
 
-
 func (c *Controller) SplitMetaNamespaceKey(key string) (namespace, kind string, name string, err error) {
 	parts := strings.Split(key, "/")
 	switch len(parts) {
@@ -190,4 +189,3 @@ func (c *Controller) SplitMetaNamespaceKey(key string) (namespace, kind string, 
 
 	return "", "", "", fmt.Errorf("unexpected key format: %q", key)
 }
-

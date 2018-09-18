@@ -1,9 +1,9 @@
 package appoptics
 
 import (
+	"encoding/json"
 	aoApi "github.com/appoptics/appoptics-api-go"
 	"github.com/appoptics/appoptics-kubernetes-controller/pkg/apis/appoptics-kubernetes-controller/v1"
-	"encoding/json"
 )
 
 //type AlertRequest struct {
@@ -41,11 +41,11 @@ func (r *Synchronizer) syncAlert(alert aoApi.Alert, status *v1.Status, specChang
 			if CheckIfErrorIsAppOpticsNotFoundError(err) {
 				return r.createAlert(alert, status, alertsService)
 			} else {
-				return  nil, err
+				return nil, err
 			}
 		} else {
 			//Service exists in AppOptics now lets check that they are actually synced
-			if status.UpdatedAt != *aoAlert.UpdatedAt  || specChange {
+			if status.UpdatedAt != *aoAlert.UpdatedAt || specChange {
 				// Local vs Remote are different so update AO
 				//SET THE ALERT ID FOR THE OBJECT ABOUT TO BE PUT
 
@@ -105,7 +105,6 @@ func (r *Synchronizer) createAlert(alert aoApi.Alert, status *v1.Status, alertsS
 	status.Hashes.AppOptics = hash
 	return status, nil
 }
-
 
 func (r *Synchronizer) RemoveAlert(ID int) error {
 	alertsService := NewAlertsService(r.Client)

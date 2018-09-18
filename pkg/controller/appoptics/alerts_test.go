@@ -1,17 +1,17 @@
 package appoptics
 
 import (
-	"net/http"
-	"testing"
-	"github.com/appoptics/appoptics-kubernetes-controller/pkg/apis/appoptics-kubernetes-controller/v1"
 	aoApi "github.com/appoptics/appoptics-api-go"
+	"github.com/appoptics/appoptics-kubernetes-controller/pkg/apis/appoptics-kubernetes-controller/v1"
+	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/assert"
+	v13 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/client-go/tools/cache"
-	v13 "k8s.io/api/core/v1"
-	"github.com/gorilla/mux"
+	"net/http"
 	"strconv"
 	"strings"
+	"testing"
 )
 
 // serviceNamespaceLister implements the ServiceNamespaceLister
@@ -29,9 +29,9 @@ func (s mockServiceLister) List(selector labels.Selector) (ret []*v1.Service, er
 	return ret, err
 }
 
-func (msl *mockServiceLister) Get (name string) (*v1.Service, error){
-	tss := v1.Status{ID:1}
-	service := v1.Service{Status:tss}
+func (msl *mockServiceLister) Get(name string) (*v1.Service, error) {
+	tss := v1.Status{ID: 1}
+	service := v1.Service{Status: tss}
 	return &service, nil
 }
 
@@ -39,13 +39,14 @@ func testIndexFunc(obj interface{}) ([]string, error) {
 	pod := obj.(v13.Pod)
 	return []string{pod.Labels["foo"]}, nil
 }
+
 const errorName = "Error"
 
-func TestExistingAlertSyncSuccess(t *testing.T){
+func TestExistingAlertSyncSuccess(t *testing.T) {
 
 	indexer := cache.NewIndexer(cache.MetaNamespaceKeyFunc, cache.Indexers{"testmodes": testIndexFunc})
 
-	msl := mockServiceLister{namespace:"test", indexer:indexer}
+	msl := mockServiceLister{namespace: "test", indexer: indexer}
 
 	data := `
                {
@@ -78,9 +79,9 @@ func TestExistingAlertSyncSuccess(t *testing.T){
 	assert.Equal(t, ts1.ID, ts.ID)
 }
 
-func TestExistingAlertNotInAppOpticsSyncSuccess(t *testing.T){
+func TestExistingAlertNotInAppOpticsSyncSuccess(t *testing.T) {
 	testName := "testName"
-	ts1, err := syncronizer.syncAlert(aoApi.Alert{Name:&testName}, &v1.Status{ID:testNotFoundId}, true)
+	ts1, err := syncronizer.syncAlert(aoApi.Alert{Name: &testName}, &v1.Status{ID: testNotFoundId}, true)
 	if err != nil {
 		t.Errorf("error running TestExistingServiceSync: %v", err)
 	}
@@ -88,23 +89,22 @@ func TestExistingAlertNotInAppOpticsSyncSuccess(t *testing.T){
 	assert.NotEqual(t, ts1, testNotFoundId)
 }
 
-func TestExistingAlertNotInAppOpticsSyncFailure(t *testing.T){
+func TestExistingAlertNotInAppOpticsSyncFailure(t *testing.T) {
 	testErrorName := errorName
-	_, err := syncronizer.syncAlert(aoApi.Alert{Name:&testErrorName}, &v1.Status{ID:testNotFoundId}, true)
+	_, err := syncronizer.syncAlert(aoApi.Alert{Name: &testErrorName}, &v1.Status{ID: testNotFoundId}, true)
 	assert.NotEqual(t, nil, err)
 }
 
-
-func TestNewAlertSyncSuccess(t *testing.T){
+func TestNewAlertSyncSuccess(t *testing.T) {
 	testName := "newAlert"
-	ID, err := syncronizer.syncAlert(aoApi.Alert{Name:&testName}, &v1.Status{ID:0}, true)
+	ID, err := syncronizer.syncAlert(aoApi.Alert{Name: &testName}, &v1.Status{ID: 0}, true)
 	assert.Equal(t, nil, err)
 	assert.NotEqual(t, 0, ID)
 }
 
-func TestNewAlertSyncFailure(t *testing.T){
+func TestNewAlertSyncFailure(t *testing.T) {
 	testName := "Error"
-	_, err := syncronizer.syncAlert(aoApi.Alert{Name:&testName}, &v1.Status{ID:0}, true)
+	_, err := syncronizer.syncAlert(aoApi.Alert{Name: &testName}, &v1.Status{ID: 0}, true)
 	assert.NotEqual(t, nil, err)
 }
 
@@ -265,6 +265,6 @@ func DeleteAlertHandler() http.HandlerFunc {
 			return
 		}
 		w.WriteHeader(http.StatusOK)
-		return;
+		return
 	}
 }

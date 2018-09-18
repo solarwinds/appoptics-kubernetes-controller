@@ -4,12 +4,12 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/appoptics/appoptics-kubernetes-controller/pkg/controller/appoptics"
 	"k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/util/runtime"
-	"github.com/appoptics/appoptics-kubernetes-controller/pkg/controller/appoptics"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/util/runtime"
 )
 
 const (
@@ -26,8 +26,8 @@ const (
 	MessageResourceUpdated = "Updated resource %s"
 
 	Dashboard = "Dashboard"
-	Alert = "Alert"
-	Service = "Service"
+	Alert     = "Alert"
+	Service   = "Service"
 )
 
 func (c *Controller) syncHandler(key string) error {
