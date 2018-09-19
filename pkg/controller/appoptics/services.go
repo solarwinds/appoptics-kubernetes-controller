@@ -66,10 +66,7 @@ func (r *Synchronizer) createService(service aoApi.Service, status *v1.Status, s
 func (r *Synchronizer) RemoveService(ID int) error {
 	servicesService := aoApi.NewServiceService(r.Client)
 	if ID != 0 {
-		err := servicesService.Delete(ID)
-		if err != nil {
-			return err
-		}
+		return servicesService.Delete(ID)
 	}
 	return nil
 }

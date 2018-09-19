@@ -98,10 +98,7 @@ func (r *Synchronizer) RemoveAlert(ID int) error {
 	// If we dont have an ID for it then we assume its new and create it
 	if ID != 0 {
 		// Lets ensure that the ID we have exists in AppOptics
-		err := alertsService.Delete(ID)
-		if err != nil {
-			return err
-		}
+		return alertsService.Delete(ID)
 	}
 	return nil
 }

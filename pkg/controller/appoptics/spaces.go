@@ -68,11 +68,7 @@ func (r *Synchronizer) RemoveSpace(ID int) error {
 	spacesService := NewSpacesService(r.Client)
 	// If we dont have an ID for it then we assume its new and create it
 	if ID != 0 {
-		err := spacesService.Delete(ID)
-		if err != nil {
-			return err
-		}
+		return spacesService.Delete(ID)
 	}
 	return nil
-
 }
