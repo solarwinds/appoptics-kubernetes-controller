@@ -6,19 +6,6 @@ import (
 	"github.com/appoptics/appoptics-kubernetes-controller/pkg/apis/appoptics-kubernetes-controller/v1"
 )
 
-//type AlertRequest struct {
-//	ID           *int                    `json:"id,omitempty"`
-//	Name         *string                 `json:"name,omitempty"`
-//	Description  *string                 `json:"description,omitempty"`
-//	Active       *bool                   `json:"active,omitempty"`
-//	Attributes   map[string][]string     `json:"attributes","omitempty"`
-//	RearmSeconds *int                    `json:"rearm_seconds,omitempty"`
-//	Conditions   []*aoApi.AlertCondition `json:"conditions,omitempty"`
-//	Services     []*int                  `json:"services,omitempty"` // correspond to IDs of Service objects
-//	CreatedAt    *int                    `json:"created_at,omitempty"`
-//	UpdatedAt    *int                    `json:"updated_at,omitempty"`
-//}
-
 type AlertsService struct {
 	aoApi.AlertsService
 	client aoApi.Client
