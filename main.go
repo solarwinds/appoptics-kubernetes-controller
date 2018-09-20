@@ -68,19 +68,17 @@ func main() {
 		glog.Fatalf("Error building ao clientset: %s", err.Error())
 	}
 
-	aoNamespace, err := getNamespace()
-	if err != nil {
-		glog.Fatalf("Error getting ao namespace: %s", err.Error())
-	}
-
 	resyncInSecs, err := getResync()
 	if err != nil {
 		glog.Fatalf("Error getting ao resync time: %s", err.Error())
 	}
 
 	kubeInformerFactory := kubeinformers.NewSharedInformerFactory(kubeClient, time.Second*time.Duration(resyncInSecs))
-	aoInformerFactory := informers.NewFilteredSharedInformerFactory(aoClient, time.Second*time.Duration(resyncInSecs), aoNamespace, nil)
 
+	aoInformerFactory, err := getAppOpticsInformerFactory(aoClient, time.Second*time.Duration(resyncInSecs))
+	if err != nil {
+		glog.Fatalf("Error getting ao namespace: %s", err.Error())
+	}
 	customScheme := scheme.Scheme
 	aoscheme.AddToScheme(customScheme)
 
@@ -126,4 +124,18 @@ func getEnvVar(name string) (string, error) {
 		return "", fmt.Errorf("%s must not be empty", name)
 	}
 	return v, nil
+}
+
+func getAppOpticsInformerFactory(client *clientset.Clientset, resyncSeconds time.Duration) (informers.SharedInformerFactory, error) {
+	_, namespaced := os.LookupEnv(namespaceEnvVar)
+	if namespaced {
+		aoNamespace, err := getNamespace()
+		if err != nil {
+			return nil, err
+		}
+		return informers.NewFilteredSharedInformerFactory(client, resyncSeconds, aoNamespace, nil), nil
+	}
+
+	return informers.NewSharedInformerFactory(client, resyncSeconds), nil
+
 }

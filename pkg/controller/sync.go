@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	v12 "github.com/appoptics/appoptics-kubernetes-controller/pkg/apis/appoptics-kubernetes-controller/v1"
 	"github.com/appoptics/appoptics-kubernetes-controller/pkg/controller/appoptics"
 	"github.com/golang/glog"
 	"k8s.io/api/core/v1"
@@ -30,6 +31,13 @@ const (
 	Alert     = "Alert"
 	Service   = "Service"
 )
+
+type CommonAoResource struct {
+	metav1.TypeMeta   `json:",inline"`
+	metav1.ObjectMeta `json:"metadata"`
+	Spec              v12.TokenAndDataSpec `json:"spec"`
+	Status            v12.Status           `json:"status,omitempty"`
+}
 
 func (c *Controller) syncHandler(key string) error {
 
@@ -99,6 +107,10 @@ func (c *Controller) syncHandler(key string) error {
 			}
 			return nil
 		}
+		commonResource := CommonAoResource(*dashboard)
+		c.finalizers(&commonResource, true)
+		udashboard := v12.Dashboard(commonResource)
+		dashboard = &udashboard
 		updateStatus, err = synchronizer.SyncSpace(dashboard.Spec, updateStatus)
 		if err != nil {
 			return err
@@ -170,6 +182,10 @@ func (c *Controller) syncHandler(key string) error {
 			}
 			return nil
 		}
+		commonResource := CommonAoResource(*service)
+		c.finalizers(&commonResource, true)
+		uservice := v12.Service(commonResource)
+		service = &uservice
 		updateStatus, err = synchronizer.SyncService(service.Spec, updateStatus)
 		if err != nil {
 			return err
@@ -241,6 +257,12 @@ func (c *Controller) syncHandler(key string) error {
 			}
 			return nil
 		}
+
+		commonResource := CommonAoResource(*alert)
+		c.finalizers(&commonResource, true)
+		ualert := v12.Alert(commonResource)
+		alert = &ualert
+
 		updateStatus, err = synchronizer.SyncAlert(alert.Spec, updateStatus, c.serviceLister.Services(namespace))
 		if err != nil {
 			return err
