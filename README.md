@@ -37,6 +37,10 @@ Basically the resources the controller can create/update/delete are Charts, Serv
 ## Important information  
   To save a secret containing your AppOptics token to your namespace.
   `make add_token NAMESPACE=<b>Your Namespace</b> TOKEN=<b>APPOPTICS API TOKEN</b>`
+
+  NAMESPACE is optional, if no namespace is passed it will run cluster wide
+
+
 This will create a secret object with the name "appoptics" in your name space within your CRDs you can reference this by defining your secret name in the spec eg 
 ```
 apiVersion: "appoptics.io/v1"  
