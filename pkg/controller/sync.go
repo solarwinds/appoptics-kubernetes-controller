@@ -5,13 +5,13 @@ import (
 	"time"
 
 	v12 "github.com/appoptics/appoptics-kubernetes-controller/pkg/apis/appoptics-kubernetes-controller/v1"
-	"github.com/appoptics/appoptics-kubernetes-controller/pkg/controller/appoptics"
 	"github.com/golang/glog"
 	"k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/runtime"
+	"github.com/appoptics/appoptics-kubernetes-controller/pkg/controller/appoptics"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 const (
@@ -32,7 +32,7 @@ const (
 	Service   = "Service"
 )
 
-type CommonAoResource struct {
+type CommonAOResource struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata"`
 	Spec              v12.TokenAndDataSpec `json:"spec"`
@@ -75,47 +75,38 @@ func (c *Controller) syncHandler(key string) error {
 		updateStatus := dashboard.Status.DeepCopy()
 		updateStatus.LastUpdated = currentTime.Format(DateFormat)
 
-		secret, err := c.kubeclientset.CoreV1().Secrets(namespace).Get(dashboard.Spec.Secret, metav1.GetOptions{})
+		aoResource := CommonAOResource(*dashboard)
+
+		secret, err := c.kubeclientset.CoreV1().Secrets(namespace).Get(aoResource.Spec.Secret, metav1.GetOptions{})
 		if err != nil {
 			return err
 		}
 
-		synchronizer := appoptics.Synchronizer{}
-		if token, ok := secret.Data["token"]; ok {
-			synchronizer = appoptics.NewSyncronizer(string(token))
-		} else {
-			return errors.NewNotFound(schema.GroupResource{}, "token")
+		aoc, err := c.GetCommunicator(secret)
+		if err != nil {
+			return err
 		}
 
-		if dashboard.DeletionTimestamp != nil {
-			updateObj := dashboard.DeepCopy()
-			if len(updateObj.Finalizers) > 0 {
-				for i, v := range updateObj.Finalizers {
-					if v == "appoptics.io" {
-						err = synchronizer.RemoveSpace(updateObj.Status.ID)
-						if err != nil {
-							return err
-						}
-						updateObj.Finalizers = append(updateObj.Finalizers[:i], updateObj.Finalizers[i+1:]...)
-						break
-					}
-				}
-			}
-			updateObj, err := c.aoclientset.AppopticsV1().Dashboards(namespace).Update(updateObj)
+		if aoResource.DeletionTimestamp != nil {
+			aoc.Remove(aoResource.Status.ID, kind)
+			c.finalizers(&aoResource, false)
+
+			uDashboard := v12.Dashboard(aoResource)
+			_, err := c.aoclientset.AppopticsV1().Dashboards(namespace).Update(&uDashboard)
 			if err != nil {
 				return err
 			}
 			return nil
 		}
-		commonResource := CommonAoResource(*dashboard)
-		c.finalizers(&commonResource, true)
-		udashboard := v12.Dashboard(commonResource)
-		dashboard = &udashboard
-		updateStatus, err = synchronizer.SyncSpace(dashboard.Spec, updateStatus)
+
+		c.finalizers(&aoResource, true)
+		updateStatus, err = aoc.Sync(aoResource.Spec, updateStatus, kind, nil)
 		if err != nil {
 			return err
 		}
-		dashboardCopy := dashboard.DeepCopy()
+
+		udashboard := v12.Dashboard(aoResource)
+		dashboardCopy := udashboard.DeepCopy()
 
 		dashboardCopy.Status = *updateStatus
 
@@ -149,50 +140,38 @@ func (c *Controller) syncHandler(key string) error {
 		// NEVER modify objects from the store. It's a read-only, local cache.
 		updateStatus := service.Status.DeepCopy()
 		updateStatus.LastUpdated = currentTime.Format(DateFormat)
+		aoResource := CommonAOResource(*service)
 
-		secret, err := c.kubeclientset.CoreV1().Secrets(namespace).Get(service.Spec.Secret, metav1.GetOptions{})
+		secret, err := c.kubeclientset.CoreV1().Secrets(namespace).Get(aoResource.Spec.Secret, metav1.GetOptions{})
 		if err != nil {
 			return err
 		}
 
-		synchronizer := appoptics.Synchronizer{}
-		if token, ok := secret.Data["token"]; ok {
-			synchronizer = appoptics.NewSyncronizer(string(token))
-		} else {
-			return errors.NewNotFound(schema.GroupResource{}, "token")
+		aoc, err := c.GetCommunicator(secret)
+		if err != nil {
+			return err
 		}
 
-		if service.DeletionTimestamp != nil {
-			updateObj := service.DeepCopy()
-			if len(updateObj.Finalizers) > 0 {
-				for i, v := range updateObj.Finalizers {
-					if v == "appoptics.io" {
-						err = synchronizer.RemoveService(updateObj.Status.ID)
-						if err != nil {
-							return err
-						}
-						updateObj.Finalizers = append(updateObj.Finalizers[:i], updateObj.Finalizers[i+1:]...)
-						break
-					}
-				}
-			}
-			updateObj, err := c.aoclientset.AppopticsV1().Services(namespace).Update(updateObj)
+		if aoResource.DeletionTimestamp != nil {
+			aoc.Remove(aoResource.Status.ID, kind)
+			c.finalizers(&aoResource, false)
+
+			uService := v12.Service(aoResource)
+			_, err := c.aoclientset.AppopticsV1().Services(namespace).Update(&uService)
 			if err != nil {
 				return err
 			}
 			return nil
 		}
-		commonResource := CommonAoResource(*service)
-		c.finalizers(&commonResource, true)
-		uservice := v12.Service(commonResource)
-		service = &uservice
-		updateStatus, err = synchronizer.SyncService(service.Spec, updateStatus)
+
+		c.finalizers(&aoResource, true)
+		updateStatus, err = aoc.Sync(aoResource.Spec, updateStatus, kind, nil)
 		if err != nil {
 			return err
 		}
 
-		serviceCopy := service.DeepCopy()
-
+		uService := v12.Service(aoResource)
+		serviceCopy := uService.DeepCopy()
 		serviceCopy.Status = *updateStatus
 
 		_, err = c.aoclientset.AppopticsV1().Services(service.Namespace).Update(serviceCopy)
@@ -222,52 +201,42 @@ func (c *Controller) syncHandler(key string) error {
 				}
 			}
 		}
-		secret, err := c.kubeclientset.CoreV1().Secrets(namespace).Get(alert.Spec.Secret, metav1.GetOptions{})
+
+		// NEVER modify objects from the store. It's a read-only, local cache.
+		updateStatus := alert.Status.DeepCopy()
+		updateStatus.LastUpdated = currentTime.Format(DateFormat)
+		aoResource := CommonAOResource(*alert)
+
+		secret, err := c.kubeclientset.CoreV1().Secrets(namespace).Get(aoResource.Spec.Secret, metav1.GetOptions{})
 		if err != nil {
 			return err
 		}
 
-		synchronizer := appoptics.Synchronizer{}
-		if token, ok := secret.Data["token"]; ok {
-			synchronizer = appoptics.NewSyncronizer(string(token))
-		} else {
-			return errors.NewNotFound(schema.GroupResource{}, "token")
+		aoc, err := c.GetCommunicator(secret)
+		if err != nil {
+			return err
 		}
-		// NEVER modify objects from the store. It's a read-only, local cache.
-		updateStatus := alert.Status.DeepCopy()
-		updateStatus.LastUpdated = currentTime.Format(DateFormat)
 
-		if alert.DeletionTimestamp != nil {
-			updateObj := alert.DeepCopy()
-			if len(updateObj.Finalizers) > 0 {
-				for i, v := range updateObj.Finalizers {
-					if v == "appoptics.io" {
-						err = synchronizer.RemoveAlert(updateObj.Status.ID)
-						if err != nil {
-							return err
-						}
-						updateObj.Finalizers = append(updateObj.Finalizers[:i], updateObj.Finalizers[i+1:]...)
-						break
-					}
-				}
-			}
-			updateObj, err := c.aoclientset.AppopticsV1().Alerts(namespace).Update(updateObj)
+		if aoResource.DeletionTimestamp != nil {
+			aoc.Remove(aoResource.Status.ID, kind)
+			c.finalizers(&aoResource, false)
+
+			uAlerts := v12.Alert(aoResource)
+			_, err := c.aoclientset.AppopticsV1().Alerts(namespace).Update(&uAlerts)
 			if err != nil {
 				return err
 			}
 			return nil
 		}
 
-		commonResource := CommonAoResource(*alert)
-		c.finalizers(&commonResource, true)
-		ualert := v12.Alert(commonResource)
-		alert = &ualert
-
-		updateStatus, err = synchronizer.SyncAlert(alert.Spec, updateStatus, c.serviceLister.Services(namespace))
+		c.finalizers(&aoResource, true)
+		updateStatus, err = aoc.Sync(aoResource.Spec, updateStatus, kind, c.serviceLister.Services(namespace))
 		if err != nil {
 			return err
 		}
-		alertCopy := alert.DeepCopy()
+
+		uAlert := v12.Alert(aoResource)
+		alertCopy := uAlert.DeepCopy()
 
 		alertCopy.Status = *updateStatus
 
@@ -280,4 +249,15 @@ func (c *Controller) syncHandler(key string) error {
 	}
 
 	return nil
+}
+
+func(c *Controller) GetCommunicator(secret *v1.Secret) (appoptics.AOCommunicator, error) {
+	aoClientToken := ""
+	if token, ok := secret.Data["token"]; ok {
+		aoClientToken = string(token)
+	} else {
+		return appoptics.AOCommunicator{}, errors.NewNotFound(schema.GroupResource{}, "token")
+	}
+	aoc := appoptics.AOCommunicator{Token: aoClientToken}
+	return aoc, nil
 }

@@ -29,7 +29,7 @@ func TestExistingServiceSyncSuccess(t *testing.T) {
 
 	td := v1.TokenAndDataSpec{Namespace: "Default", Data: data, Secret: "blah"}
 
-	ts1, err := syncronizer.SyncService(td, &ts)
+	ts1, err := aoc.Sync(td, &ts, Service, nil)
 	if err != nil {
 		t.Errorf("error running TestExistingServiceSync: %v", err)
 	}
@@ -53,7 +53,7 @@ func TestUpdateExistingServicesSyncFailure(t *testing.T) {
 
 	td := v1.TokenAndDataSpec{Namespace: "Default", Data: data, Secret: "blah"}
 
-	_, err := syncronizer.SyncService(td, &ts)
+	_, err := aoc.Sync(td, &ts, Service, nil)
 	assert.NotEqual(t, nil, err)
 	assert.Equal(t, `{"errors":{"request":["Test Error"]}}`, err.Error())
 }
@@ -75,7 +75,7 @@ func TestNewServiceSyncSuccess(t *testing.T) {
 
 	td := v1.TokenAndDataSpec{Namespace: "Default", Data: data, Secret: "blah"}
 
-	ts1, err := syncronizer.SyncService(td, &ts)
+	ts1, err := aoc.Sync(td, &ts, Service, nil)
 	if err != nil {
 		t.Errorf("error running TestExistingServiceSync: %v", err)
 	}
@@ -101,7 +101,7 @@ func TestDeletedInAppopticsButNotInCRDServiceSyncSuccess(t *testing.T) {
 
 	td := v1.TokenAndDataSpec{Namespace: "Default", Data: data, Secret: "blah"}
 
-	ts1, err := syncronizer.SyncService(td, &ts)
+	ts1, err := aoc.Sync(td, &ts, Service, nil)
 	if err != nil {
 		t.Errorf("error running TestSpacesSync: %v", err)
 	}
@@ -127,7 +127,7 @@ func TestNewServiceCreateErrorInAppopticsFailure(t *testing.T) {
 
 	td := v1.TokenAndDataSpec{Namespace: "Default", Data: data, Secret: "blah"}
 
-	_, err := syncronizer.SyncService(td, &ts)
+	_, err := aoc.Sync(td, &ts, Service, nil)
 	assert.NotEqual(t, nil, err)
 	assert.Equal(t, `{"errors":{"request":["Test Error"]}}`, err.Error())
 }
@@ -148,7 +148,7 @@ func TestMissingServiceCreateErrorInAppopticsFailure(t *testing.T) {
 
 	td := v1.TokenAndDataSpec{Namespace: "Default", Data: data, Secret: "blah"}
 
-	_, err := syncronizer.SyncService(td, &ts)
+	_, err := aoc.Sync(td, &ts, Service, nil)
 	assert.NotEqual(t, nil, err)
 	assert.Equal(t, `{"errors":{"request":["Test Error"]}}`, err.Error())
 }
@@ -168,13 +168,13 @@ func TestOutOfSyncServiceCreateErrorThenRetrieveErrorInAppoptics(t *testing.T) {
            }`
 	td := v1.TokenAndDataSpec{Namespace: "Default", Data: data, Secret: "blah"}
 
-	_, err := syncronizer.SyncService(td, &ts)
+	_, err := aoc.Sync(td, &ts, Service, nil)
 	assert.NotEqual(t, nil, err)
 	assert.Equal(t, `{"errors":{"request":["Test Error"]}}`, err.Error())
 }
 
 func TestDeletingServiceSuccessSync(t *testing.T) {
-	err := syncronizer.RemoveService(1)
+	err := aoc.Remove(1, Service)
 	if err != nil {
 		t.Errorf("error running TestSpacesSync: %v", err)
 	}
@@ -183,7 +183,7 @@ func TestDeletingServiceSuccessSync(t *testing.T) {
 }
 
 func TestDeletingServiceErrorSync(t *testing.T) {
-	err := syncronizer.RemoveService(testInternalServerErrorId)
+	err := aoc.Remove(testInternalServerErrorId, Service)
 
 	assert.Equal(t, err.Error(), `{"errors":{"request":["Internal Server Error"]}}`)
 }

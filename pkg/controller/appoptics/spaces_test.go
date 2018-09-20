@@ -1,12 +1,9 @@
 package appoptics
 
 import (
-	"encoding/json"
 	"github.com/appoptics/appoptics-kubernetes-controller/pkg/apis/appoptics-kubernetes-controller/v1"
 	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/assert"
-	"io"
-	"io/ioutil"
 	"net/http"
 	"strconv"
 	"strings"
@@ -14,6 +11,10 @@ import (
 )
 
 const spaceError = "spaceError"
+
+type SimpleSpace struct {
+	Name string `json:"name","omitempty"`
+}
 
 func TestSpacesService_Create(t *testing.T) {
 	space, err := NewSpacesService(client).Create("CPUs")
@@ -37,7 +38,7 @@ charts:
 
 	td := v1.TokenAndDataSpec{Namespace: "Default", Data: data, Secret: "blah"}
 
-	ts1, err := syncronizer.SyncSpace(td, &ts)
+	ts1, err := aoc.Sync(td, &ts, Dashboard, nil)
 	if err != nil {
 		t.Errorf("error running TestSpacesSync: %v", err)
 	}
@@ -57,7 +58,7 @@ charts:
 
 	td := v1.TokenAndDataSpec{Namespace: "Default", Data: data, Secret: "blah"}
 
-	ts1, err := syncronizer.SyncSpace(td, &ts)
+	ts1, err := aoc.Sync(td, &ts, Dashboard, nil)
 	if err != nil {
 		t.Errorf("error running TestSpacesSync: %v", err)
 	}
@@ -78,7 +79,7 @@ charts:
 
 	td := v1.TokenAndDataSpec{Namespace: "Default", Data: data, Secret: "blah"}
 
-	ts1, err := syncronizer.SyncSpace(td, &ts)
+	ts1, err := aoc.Sync(td, &ts, Dashboard, nil)
 	if err != nil {
 		t.Errorf("error running TestSpacesSync: %v", err)
 	}
@@ -99,7 +100,7 @@ charts:
 
 	td := v1.TokenAndDataSpec{Namespace: "Default", Data: data, Secret: "blah"}
 
-	_, err := syncronizer.SyncSpace(td, &ts)
+	_, err := aoc.Sync(td, &ts, Dashboard, nil)
 	assert.NotEqual(t, nil, err)
 	assert.Equal(t, `{"errors":{"request":["Internal Server Error"]}}`, err.Error())
 }
@@ -114,7 +115,7 @@ charts:
 `
 	td := v1.TokenAndDataSpec{Namespace: "Default", Data: data, Secret: "blah"}
 
-	_, err := syncronizer.SyncSpace(td, &ts)
+	_, err := aoc.Sync(td, &ts, Dashboard, nil)
 	assert.NotEqual(t, nil, err)
 	assert.Equal(t, `{"errors":{"request":["Internal Server Error"]}}`, err.Error())
 }
@@ -129,7 +130,7 @@ charts:
 `
 	td := v1.TokenAndDataSpec{Namespace: "Default", Data: data, Secret: "blah"}
 
-	_, err := syncronizer.SyncSpace(td, &ts)
+	_, err := aoc.Sync(td, &ts, Dashboard, nil)
 	assert.NotEqual(t, nil, err)
 	assert.Equal(t, `{"errors":{"request":["Internal Server Error"]}}`, err.Error())
 }
@@ -146,7 +147,7 @@ charts:
 
 	td := v1.TokenAndDataSpec{Namespace: "Default", Data: data, Secret: "blah"}
 
-	_, err := syncronizer.SyncSpace(td, &ts)
+	_, err := aoc.Sync(td, &ts, Dashboard, nil)
 	assert.NotEqual(t, nil, err)
 	assert.Equal(t, `{"errors":{"request":["`+spaceError+`"]}}`, err.Error())
 }
@@ -171,13 +172,13 @@ charts:
 
 	td := v1.TokenAndDataSpec{Namespace: "Default", Data: data, Secret: "blah"}
 
-	_, err := syncronizer.SyncSpace(td, &ts)
+	_, err := aoc.Sync(td, &ts, Dashboard, nil)
 
 	assert.Equal(t, err.Error(), `{"errors":{"request":["Internal Server Error"]}}`)
 }
 
 func TestDeletingSpaceSuccessSync(t *testing.T) {
-	err := syncronizer.RemoveSpace(1)
+	err := aoc.Remove(1, Dashboard)
 	if err != nil {
 		t.Errorf("error running TestSpacesSync: %v", err)
 	}
@@ -186,8 +187,7 @@ func TestDeletingSpaceSuccessSync(t *testing.T) {
 }
 
 func TestDeletingSpaceErrorSync(t *testing.T) {
-	err := syncronizer.RemoveSpace(testInternalServerErrorId)
-
+	err := aoc.Remove(testInternalServerErrorId, Dashboard)
 	assert.Equal(t, err.Error(), `{"errors":{"request":["Internal Server Error"]}}`)
 }
 
@@ -290,34 +290,4 @@ func DeleteSpaceHandler() http.HandlerFunc {
 		w.WriteHeader(http.StatusOK)
 		return
 	}
-}
-
-func JsonValidateAndDecode(body io.ReadCloser, v interface{}) error {
-	//Read the body into a buffer to see if it is empty
-	if body == nil {
-		//Null or empty body will error on decode but it is not invalid
-		return nil
-	}
-
-	buff, err := ioutil.ReadAll(body)
-	if err != nil {
-		return err
-	}
-
-	//If the payload is an empty string it will error on decode but is not invalid
-	if len(buff) == 0 {
-		return nil
-	}
-
-	//body is empty so create a new reader from the buffer
-	decoder := json.NewDecoder(strings.NewReader(string(buff)))
-
-	err = decoder.Decode(&v)
-	if err != nil {
-		return err
-	}
-	defer body.Close()
-
-	//No errors occurred
-	return nil
 }

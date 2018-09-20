@@ -199,7 +199,7 @@ func (c *Controller) SplitMetaNamespaceKey(key string) (namespace, kind string, 
 	return "", "", "", fmt.Errorf("unexpected key format: %q", key)
 }
 
-func (c *Controller) finalizers(spec *CommonAoResource, isAdd addFinalizer) {
+func (c *Controller) finalizers(spec *CommonAOResource, isAdd addFinalizer) {
 	if isAdd {
 		if len(spec.Finalizers) != 1 || spec.Finalizers[0] != AppopticsFinalizer {
 			spec.Finalizers = []string{

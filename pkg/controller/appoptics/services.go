@@ -4,21 +4,36 @@ import (
 	"encoding/json"
 	aoApi "github.com/appoptics/appoptics-api-go"
 	"github.com/appoptics/appoptics-kubernetes-controller/pkg/apis/appoptics-kubernetes-controller/v1"
+	"github.com/ghodss/yaml"
 	"reflect"
 	"time"
 )
 
-func (r *Synchronizer) syncService(service aoApi.Service, status *v1.Status) (*v1.Status, error) {
-	servicesService := aoApi.NewServiceService(r.Client)
+type ServicesService struct {
+	aoApi.ServicesCommunicator
+	client *aoApi.Client
+}
+
+func NewServicesService(c *aoApi.Client) *ServicesService {
+	return &ServicesService{c.ServicesService(), c}
+}
+
+func (ss *ServicesService) Sync(spec v1.TokenAndDataSpec, status *v1.Status) (*v1.Status, error) {
+	var service aoApi.Service
+	err := yaml.Unmarshal([]byte(spec.Data), &service)
+	if err != nil {
+		return nil, err
+	}
+
 	// If we dont have an ID for it then we assume its new and create it
 	if status.ID == 0 {
-		return r.createService(service, status, servicesService)
+		return ss.createService(service, status)
 	} else {
 		// Lets ensure that the ID we have exists in AppOptics
-		aoService, err := servicesService.Retrieve(status.ID)
+		aoService, err := ss.Retrieve(status.ID)
 		if err != nil {
 			if CheckIfErrorIsAppOpticsNotFoundError(err) {
-				return r.createService(service, status, servicesService)
+				return ss.createService(service, status)
 			} else {
 				return nil, err
 			}
@@ -27,7 +42,7 @@ func (r *Synchronizer) syncService(service aoApi.Service, status *v1.Status) (*v
 			service.ID = &status.ID
 			if !reflect.DeepEqual(&service, aoService) {
 				// Local vs Remote are different so update AO
-				err = servicesService.Update(&service)
+				err = ss.Update(&service)
 				if err != nil {
 					return nil, err
 				}
@@ -48,8 +63,8 @@ func (r *Synchronizer) syncService(service aoApi.Service, status *v1.Status) (*v
 
 }
 
-func (r *Synchronizer) createService(service aoApi.Service, status *v1.Status, servicesService *aoApi.ServicesService) (*v1.Status, error) {
-	aoService, err := servicesService.Create(&service)
+func (ss *ServicesService) createService(service aoApi.Service, status *v1.Status) (*v1.Status, error) {
+	aoService, err := ss.Create(&service)
 	if err != nil {
 		return nil, err
 	}
@@ -61,12 +76,4 @@ func (r *Synchronizer) createService(service aoApi.Service, status *v1.Status, s
 	}
 	status.Hashes.AppOptics = hash
 	return status, nil
-}
-
-func (r *Synchronizer) RemoveService(ID int) error {
-	servicesService := aoApi.NewServiceService(r.Client)
-	if ID != 0 {
-		return servicesService.Delete(ID)
-	}
-	return nil
 }

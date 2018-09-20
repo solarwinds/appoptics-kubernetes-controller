@@ -1,126 +1,54 @@
 package appoptics
 
 import (
-	"bytes"
-	"encoding/json"
 	aoApi "github.com/appoptics/appoptics-api-go"
 	"github.com/appoptics/appoptics-kubernetes-controller/pkg/apis/appoptics-kubernetes-controller/v1"
 	listers "github.com/appoptics/appoptics-kubernetes-controller/pkg/client/listers/appoptics-kubernetes-controller/v1"
-	"github.com/ghodss/yaml"
+	"strings"
 )
 
-type Synchronizer struct {
-	Client *aoApi.Client
+type AOResource interface {
+	Sync(v1.TokenAndDataSpec, *v1.Status) (*v1.Status, error)
+	Delete(int) error
 }
 
-type AO interface {
-	SyncSpace(v1.TokenAndDataSpec, *v1.Status) (*v1.Status, error)
-	syncSpace(CustomSpace, *v1.Status) (*v1.Status, error)
-	SyncService(v1.TokenAndDataSpec, *v1.Status) (*v1.Status, error)
-	syncService(aoApi.Service, *v1.Status) (*v1.Status, error)
-	SyncAlert(v1.TokenAndDataSpec, *v1.Status, listers.ServiceNamespaceLister) (*v1.Status, error)
-	syncAlert(aoApi.Alert, *v1.Status, bool) (*v1.Status, error)
-	RemoveAlert(int) error
-	RemoveService(int) error
-	RemoveSpace(int) error
+type AOResourceCommunicator interface {
+	Sync(v1.TokenAndDataSpec, *v1.Status, string, listers.ServiceNamespaceLister) (*v1.Status, error)
+	Remove(int, string) error
 }
 
-func NewSyncronizer(token string) Synchronizer {
-	client := aoApi.NewClient(token)
-	return Synchronizer{client}
-
+type AOCommunicator struct {
+	Token string
 }
 
-func (r *Synchronizer) SyncSpace(spec v1.TokenAndDataSpec, status *v1.Status) (*v1.Status, error) {
-	var dash CustomSpace
-	err := yaml.Unmarshal([]byte(spec.Data), &dash)
-	if err != nil {
-		return nil, err
+func (aoc *AOCommunicator) Remove(ID int, kind string) error {
+	client := aoApi.NewClient(aoc.Token)
+	switch strings.ToLower(kind) {
+	case Dashboard:
+		spacesService := NewSpacesService(client)
+		return spacesService.Delete(ID)
+	case Service:
+		servicesService := NewServicesService(client)
+		return servicesService.Delete(ID)
+	case Alert:
+		alertsService := NewAlertsService(client, nil)
+		return alertsService.Delete(ID)
 	}
-
-	// Sync Space aka Dashboard at a high level
-	status, err = r.syncSpace(dash, status)
-	if err != nil {
-		return nil, err
-	}
-
-	aoChartHash, err := r.getChartHash(status.ID)
-	if err != nil {
-		return nil, err
-	}
-
-	specHash, err := Hash(spec)
-	if err != nil {
-		return nil, err
-	}
-	// Sync Charts
-	if bytes.Compare(status.Hashes.AppOptics, aoChartHash) != 0 || bytes.Compare(status.Hashes.Spec, specHash) != 0 {
-		err = r.syncCharts(dash.Charts, status.ID)
-		if err != nil {
-			return nil, err
-		}
-
-		status.Hashes.AppOptics, err = r.getChartHash(status.ID)
-		if err != nil {
-			return nil, err
-		}
-		status.Hashes.Spec = specHash
-	}
-
-	return status, nil
+	return nil
 }
 
-func (r *Synchronizer) SyncService(spec v1.TokenAndDataSpec, status *v1.Status) (*v1.Status, error) {
-	var service aoApi.Service
-	err := yaml.Unmarshal([]byte(spec.Data), &service)
-	if err != nil {
-		return nil, err
+func (aoc *AOCommunicator) Sync(spec v1.TokenAndDataSpec, status *v1.Status, kind string, lister listers.ServiceNamespaceLister) (*v1.Status, error) {
+	client := aoApi.NewClient(aoc.Token)
+	switch strings.ToLower(kind) {
+	case Dashboard:
+		spacesService := NewSpacesService(client)
+		return spacesService.Sync(spec, status)
+	case Service:
+		servicesService := NewServicesService(client)
+		return servicesService.Sync(spec, status)
+	case Alert:
+		alertService := NewAlertsService(client, lister)
+		return alertService.Sync(spec, status)
 	}
-
-	// Sync Service
-	return r.syncService(service, status)
-}
-
-func (r *Synchronizer) SyncAlert(spec v1.TokenAndDataSpec, status *v1.Status, serviceNamespaceLister listers.ServiceNamespaceLister) (*v1.Status, error) {
-	specString, err := json.Marshal(spec)
-	if err != nil {
-		return nil, err
-	}
-	specHash, err := Hash([]byte(specString))
-	if err != nil {
-		return nil, err
-	}
-	specChanged := bytes.Compare(specHash, status.Hashes.Spec) != 0
-	if specChanged {
-		status.Hashes.Spec = specHash
-	}
-	var customAlert aoApi.Alert
-	err = yaml.Unmarshal([]byte(spec.Data), &customAlert)
-	if err != nil {
-		return nil, err
-	}
-
-	var notificationServices []*aoApi.Service
-	if services, ok := customAlert.Attributes["services"]; ok {
-		for _, serviceObj := range services.([]interface{}) {
-			serviceStr := serviceObj.(string)
-			service, err := serviceNamespaceLister.Get(serviceStr)
-			if err != err {
-				return nil, err
-			}
-			if service != nil && service.Status.ID != 0 {
-				notificationServices = append(notificationServices, &aoApi.Service{ID: &service.Status.ID})
-			}
-		}
-	}
-
-	customAlert.Services = notificationServices
-
-	// Sync Alert
-	status, err = r.syncAlert(customAlert, status, specChanged)
-	if err != nil {
-		return nil, err
-	}
-
 	return status, nil
 }

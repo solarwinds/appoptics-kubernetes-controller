@@ -9,6 +9,12 @@ import (
 	"encoding/json"
 )
 
+const (
+	Dashboard = "dashboard"
+	Alert     = "alert"
+	Service   = "service"
+)
+
 func CheckIfErrorIsAppOpticsNotFoundError(err error) bool {
 	if errorResponse, ok := err.(*aoApi.ErrorResponse); ok {
 		errorObj := errorResponse.Errors.(map[string]interface{})
