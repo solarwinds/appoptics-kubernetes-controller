@@ -1,0 +1,13 @@
+apiVersion: "appoptics.io/v1"
+kind: "Service"
+metadata:
+  name: exampleservice
+  namespace: default
+spec:
+  namespace: "default"
+  secret: "appoptics"
+  data: |-
+    type: "mail"
+    settings:
+      addresses: "support@support.io"
+    title: "SUPPORT"
