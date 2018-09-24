@@ -31,11 +31,11 @@ import (
 	// required to run with tectonic auth
 	_ "k8s.io/client-go/plugin/pkg/client/auth/oidc"
 
-	clientset "github.com/appoptics/appoptics-kubernetes-controller/pkg/client/clientset/versioned"
-	aoscheme "github.com/appoptics/appoptics-kubernetes-controller/pkg/client/clientset/versioned/scheme"
-	informers "github.com/appoptics/appoptics-kubernetes-controller/pkg/client/informers/externalversions"
-	"github.com/appoptics/appoptics-kubernetes-controller/pkg/controller"
-	"github.com/appoptics/appoptics-kubernetes-controller/pkg/signals"
+	clientset "github.com/solarwinds/appoptics-kubernetes-controller/pkg/client/clientset/versioned"
+	aoscheme "github.com/solarwinds/appoptics-kubernetes-controller/pkg/client/clientset/versioned/scheme"
+	informers "github.com/solarwinds/appoptics-kubernetes-controller/pkg/client/informers/externalversions"
+	"github.com/solarwinds/appoptics-kubernetes-controller/pkg/controller"
+	"github.com/solarwinds/appoptics-kubernetes-controller/pkg/signals"
 )
 
 var (

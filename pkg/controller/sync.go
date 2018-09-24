@@ -4,13 +4,13 @@ import (
 	"fmt"
 	"time"
 
-	v12 "github.com/appoptics/appoptics-kubernetes-controller/pkg/apis/appoptics-kubernetes-controller/v1"
+	v12 "github.com/solarwinds/appoptics-kubernetes-controller/pkg/apis/appoptics-kubernetes-controller/v1"
 	"github.com/golang/glog"
 	"k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/runtime"
-	"github.com/appoptics/appoptics-kubernetes-controller/pkg/controller/appoptics"
+	"github.com/solarwinds/appoptics-kubernetes-controller/pkg/controller/appoptics"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 

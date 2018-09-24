@@ -63,7 +63,7 @@ spec:
 ## Build, docker build, push...  
   
 To make things easier, checkout the project to:  
-`$GOPATH/src/github.com/appoptics/appoptics-kubernetes-controller`  
+`$GOPATH/src/github.com/solarwinds/appoptics-kubernetes-controller`
   
 To build the controller and create a docker container we just need to run `make`. This will:  
   
@@ -75,11 +75,11 @@ To build the controller and create a docker container we just need to run `make`
   
   * Build a docker image and tag it    
   
-After that you can build and push the docker image to `docker.com/appoptics/appoptics-kubernetes-controller` with:  
+After that you can build and push the docker image to `docker.com/solarwinds/appoptics-kubernetes-controller` with:
   
   * To push the image with the tag `canary` and APP_VERSION `canary` you can just run: `make push`  
   
-  * If we want to push the image with a different tag (or tags!) you can run: `IMAGE_TAG=belitre make push`, this will push the docker image as `docker.com/appoptics/appoptics-kubernetes-controller:belitre`  
+  * If we want to push the image with a different tag (or tags!) you can run: `IMAGE_TAG=belitre make push`, this will push the docker image as `docker.com/solarwinds/appoptics-kubernetes-controller:belitre`
   
   * __IMAGE_TAG__ is used to get the version to tag the resources, the controller will tag resources with the labels:  
   

@@ -1,6 +1,6 @@
-PACKAGE_NAME := github.com/appoptics/appoptics-kubernetes-controller
-REGISTRY := hub.docker.com/r/appoptics
-APP_NAME := appoptics_kubernetes_controller
+PACKAGE_NAME := github.com/solarwinds/appoptics-kubernetes-controller
+REGISTRY := docker.com/
+APP_NAME := appoptics/appoptics_kubernetes_controller
 IMAGE_TAG ?= 0.1
 GOPATH ?= $HOME/go
 HACK_DIR ?= hack

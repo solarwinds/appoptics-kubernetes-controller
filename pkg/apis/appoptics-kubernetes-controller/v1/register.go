@@ -1,7 +1,7 @@
 package v1
 
 import (
-	appoptic "github.com/appoptics/appoptics-kubernetes-controller/pkg/apis/appoptics-kubernetes-controller"
+	appoptic "github.com/solarwinds/appoptics-kubernetes-controller/pkg/apis/appoptics-kubernetes-controller"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
