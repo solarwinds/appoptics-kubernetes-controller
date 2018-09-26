@@ -4,14 +4,14 @@ import (
 	"fmt"
 	"time"
 
-	v12 "github.com/solarwinds/appoptics-kubernetes-controller/pkg/apis/appoptics-kubernetes-controller/v1"
 	"github.com/golang/glog"
+	v12 "github.com/solarwinds/appoptics-kubernetes-controller/pkg/apis/appoptics-kubernetes-controller/v1"
+	"github.com/solarwinds/appoptics-kubernetes-controller/pkg/controller/appoptics"
 	"k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/util/runtime"
-	"github.com/solarwinds/appoptics-kubernetes-controller/pkg/controller/appoptics"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/util/runtime"
 )
 
 const (
@@ -88,8 +88,11 @@ func (c *Controller) syncHandler(key string) error {
 		}
 
 		if aoResource.DeletionTimestamp != nil {
-			aoc.Remove(aoResource.Status.ID, kind)
-			c.finalizers(&aoResource, false)
+			err = aoc.Remove(aoResource.Status.ID, kind)
+			if err != nil {
+				return err
+			}
+			c.finalizers(&aoResource, remove)
 
 			uDashboard := v12.Dashboard(aoResource)
 			_, err := c.aoclientset.AppopticsV1().Dashboards(namespace).Update(&uDashboard)
@@ -99,7 +102,7 @@ func (c *Controller) syncHandler(key string) error {
 			return nil
 		}
 
-		c.finalizers(&aoResource, true)
+		c.finalizers(&aoResource, add)
 		updateStatus, err = aoc.Sync(aoResource.Spec, updateStatus, kind, nil)
 		if err != nil {
 			return err
@@ -153,8 +156,11 @@ func (c *Controller) syncHandler(key string) error {
 		}
 
 		if aoResource.DeletionTimestamp != nil {
-			aoc.Remove(aoResource.Status.ID, kind)
-			c.finalizers(&aoResource, false)
+			err = aoc.Remove(aoResource.Status.ID, kind)
+			if err != nil {
+				return err
+			}
+			c.finalizers(&aoResource, remove)
 
 			uService := v12.Service(aoResource)
 			_, err := c.aoclientset.AppopticsV1().Services(namespace).Update(&uService)
@@ -164,7 +170,7 @@ func (c *Controller) syncHandler(key string) error {
 			return nil
 		}
 
-		c.finalizers(&aoResource, true)
+		c.finalizers(&aoResource, add)
 		updateStatus, err = aoc.Sync(aoResource.Spec, updateStatus, kind, nil)
 		if err != nil {
 			return err
@@ -218,8 +224,11 @@ func (c *Controller) syncHandler(key string) error {
 		}
 
 		if aoResource.DeletionTimestamp != nil {
-			aoc.Remove(aoResource.Status.ID, kind)
-			c.finalizers(&aoResource, false)
+			err = aoc.Remove(aoResource.Status.ID, kind)
+			if err != nil {
+				return err
+			}
+			c.finalizers(&aoResource, remove)
 
 			uAlerts := v12.Alert(aoResource)
 			_, err := c.aoclientset.AppopticsV1().Alerts(namespace).Update(&uAlerts)
@@ -229,7 +238,7 @@ func (c *Controller) syncHandler(key string) error {
 			return nil
 		}
 
-		c.finalizers(&aoResource, true)
+		c.finalizers(&aoResource, add)
 		updateStatus, err = aoc.Sync(aoResource.Spec, updateStatus, kind, c.serviceLister.Services(namespace))
 		if err != nil {
 			return err
@@ -251,7 +260,7 @@ func (c *Controller) syncHandler(key string) error {
 	return nil
 }
 
-func(c *Controller) GetCommunicator(secret *v1.Secret) (appoptics.AOCommunicator, error) {
+func (c *Controller) GetCommunicator(secret *v1.Secret) (appoptics.AOCommunicator, error) {
 	aoClientToken := ""
 	if token, ok := secret.Data["token"]; ok {
 		aoClientToken = string(token)

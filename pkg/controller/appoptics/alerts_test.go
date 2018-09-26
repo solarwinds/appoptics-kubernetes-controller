@@ -2,8 +2,8 @@ package appoptics
 
 import (
 	aoApi "github.com/appoptics/appoptics-api-go"
-	"github.com/solarwinds/appoptics-kubernetes-controller/pkg/apis/appoptics-kubernetes-controller/v1"
 	"github.com/gorilla/mux"
+	"github.com/solarwinds/appoptics-kubernetes-controller/pkg/apis/appoptics-kubernetes-controller/v1"
 	"github.com/stretchr/testify/assert"
 	"net/http"
 	"strconv"

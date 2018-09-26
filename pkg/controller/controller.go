@@ -4,12 +4,12 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/golang/glog"
 	clientset "github.com/solarwinds/appoptics-kubernetes-controller/pkg/client/clientset/versioned"
 	"github.com/solarwinds/appoptics-kubernetes-controller/pkg/client/clientset/versioned/scheme"
 	aoscheme "github.com/solarwinds/appoptics-kubernetes-controller/pkg/client/clientset/versioned/scheme"
 	informers "github.com/solarwinds/appoptics-kubernetes-controller/pkg/client/informers/externalversions"
 	listers "github.com/solarwinds/appoptics-kubernetes-controller/pkg/client/listers/appoptics-kubernetes-controller/v1"
-	"github.com/golang/glog"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/util/runtime"
