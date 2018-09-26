@@ -4,9 +4,9 @@ import (
 	"bytes"
 	"encoding/json"
 	aoApi "github.com/appoptics/appoptics-api-go"
+	"github.com/ghodss/yaml"
 	"github.com/solarwinds/appoptics-kubernetes-controller/pkg/apis/appoptics-kubernetes-controller/v1"
 	listers "github.com/solarwinds/appoptics-kubernetes-controller/pkg/client/listers/appoptics-kubernetes-controller/v1"
-	"github.com/ghodss/yaml"
 )
 
 type AlertsService struct {

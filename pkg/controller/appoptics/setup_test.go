@@ -8,9 +8,9 @@ import (
 
 	"encoding/json"
 	"github.com/appoptics/appoptics-api-go"
+	"github.com/gorilla/mux"
 	"github.com/solarwinds/appoptics-kubernetes-controller/pkg/apis/appoptics-kubernetes-controller/v1"
 	v12 "github.com/solarwinds/appoptics-kubernetes-controller/pkg/client/listers/appoptics-kubernetes-controller/v1"
-	"github.com/gorilla/mux"
 	"io"
 	"io/ioutil"
 	v13 "k8s.io/api/core/v1"

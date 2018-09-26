@@ -1,8 +1,8 @@
 package appoptics
 
 import (
-	"github.com/solarwinds/appoptics-kubernetes-controller/pkg/apis/appoptics-kubernetes-controller/v1"
 	"github.com/gorilla/mux"
+	"github.com/solarwinds/appoptics-kubernetes-controller/pkg/apis/appoptics-kubernetes-controller/v1"
 	"github.com/stretchr/testify/assert"
 	"net/http"
 	"strconv"

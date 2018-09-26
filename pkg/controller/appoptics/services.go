@@ -3,8 +3,8 @@ package appoptics
 import (
 	"encoding/json"
 	aoApi "github.com/appoptics/appoptics-api-go"
-	"github.com/solarwinds/appoptics-kubernetes-controller/pkg/apis/appoptics-kubernetes-controller/v1"
 	"github.com/ghodss/yaml"
+	"github.com/solarwinds/appoptics-kubernetes-controller/pkg/apis/appoptics-kubernetes-controller/v1"
 	"reflect"
 	"time"
 )
