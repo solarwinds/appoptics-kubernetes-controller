@@ -43,7 +43,7 @@ func (as *AlertsService) Sync(spec v1.TokenAndDataSpec, status *v1.Status) (*v1.
 		for _, serviceObj := range services.([]interface{}) {
 			serviceStr := serviceObj.(string)
 			service, err := as.lister.Get(serviceStr)
-			if err != err {
+			if err != nil {
 				return nil, err
 			}
 			if service != nil && service.Status.ID != 0 {
@@ -67,18 +67,37 @@ func (as *AlertsService) Sync(spec v1.TokenAndDataSpec, status *v1.Status) (*v1.
 				return nil, err
 			}
 		} else {
+			//Associate services, remove any already associated services and delete any non existing associations
+			for _, service := range aoAlert.Services {
+				index := -1
+				for  idx, customService := range notificationServices {
+					if *customService.ID == *service.ID {
+						index = idx
+					}
+				}
+
+				if index != -1 {
+					notificationServices = append(notificationServices[:index], notificationServices[index+1:]...)
+				} else {
+					err := as.DisassociateFromService(*aoAlert.ID, *service.ID)
+					if err != nil {
+						return nil, err
+					}
+				}
+
+			}
+			for _, service := range notificationServices {
+				err = as.AssociateToService(*aoAlert.ID, *service.ID)
+				if err != nil {
+					return nil, err
+				}
+			}
 			//Service exists in AppOptics now lets check that they are actually synced
 			if status.UpdatedAt != *aoAlert.UpdatedAt || specChanged {
 				// Local vs Remote are different so update AO
 				//SET THE ALERT ID FOR THE OBJECT ABOUT TO BE PUT
 				customAlert.ID = aoAlert.ID
-				//Associate services
-				for _, service := range aoAlert.Services {
-					err = as.AssociateToService(*aoAlert.ID, *service.ID)
-					if err != nil {
-						return nil, err
-					}
-				}
+
 				// Update the alert
 				err = as.Update(&customAlert)
 				if err != nil {

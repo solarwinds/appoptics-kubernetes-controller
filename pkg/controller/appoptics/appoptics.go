@@ -25,14 +25,38 @@ func (aoc *AOCommunicator) Remove(ID int, kind string) error {
 	client := aoApi.NewClient(aoc.Token)
 	switch strings.ToLower(kind) {
 	case Dashboard:
+		chartsService := NewChartsService(client)
+		aoCharts, err := chartsService.List(ID)
+		if err != nil && !CheckIfErrorIsAppOpticsNotFoundError(err){
+			return err
+		}
+
+		// DELETE ALL AO CHARTS AND CREATE OURS
+		if len(aoCharts) != 0 {
+			err = chartsService.DeleteAll(aoCharts, ID)
+			if err != nil && !CheckIfErrorIsAppOpticsNotFoundError(err){
+				return err
+			}
+		}
+
+		// delete all charts
 		spacesService := NewSpacesService(client)
-		return spacesService.Delete(ID)
+		err = spacesService.Delete(ID)
+		if err != nil && !CheckIfErrorIsAppOpticsNotFoundError(err){
+			return err
+		}
 	case Service:
 		servicesService := NewServicesService(client)
-		return servicesService.Delete(ID)
+		err := servicesService.Delete(ID)
+		if err != nil && !CheckIfErrorIsAppOpticsNotFoundError(err){
+			return err
+		}
 	case Alert:
 		alertsService := NewAlertsService(client, nil)
-		return alertsService.Delete(ID)
+		err := alertsService.Delete(ID)
+		if err != nil && !CheckIfErrorIsAppOpticsNotFoundError(err){
+			return err
+		}
 	}
 	return nil
 }
