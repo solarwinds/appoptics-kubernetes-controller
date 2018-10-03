@@ -267,6 +267,5 @@ func (c *Controller) GetCommunicator(secret *v1.Secret) (appoptics.AOCommunicato
 	} else {
 		return appoptics.AOCommunicator{}, errors.NewNotFound(schema.GroupResource{}, "token")
 	}
-	aoc := appoptics.AOCommunicator{Token: aoClientToken}
-	return aoc, nil
+	return appoptics.NewAOCommunicator(aoClientToken), nil
 }

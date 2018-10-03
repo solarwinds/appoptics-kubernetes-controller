@@ -22,7 +22,7 @@ import (
 var (
 	client *appoptics.Client
 	server *httptest.Server
-	aoc    *mockAOCommunicator
+	aoc    *AOCommunicator
 )
 
 const testNotFoundId int = 9
@@ -33,8 +33,7 @@ func setup() {
 	server = httptest.NewServer(router)
 	serverURLWithVersion := fmt.Sprintf("%s/v1/", server.URL)
 	client = appoptics.NewClient("deadbeef", appoptics.BaseURLClientOption(serverURLWithVersion))
-	aoc = &mockAOCommunicator{""}
-
+	aoc = &AOCommunicator{Client: *client}
 }
 
 func teardown() {
@@ -73,6 +72,8 @@ func NewServerTestMux() *mux.Router {
 	router.Handle("/v1/alerts/{alertId}", RetrieveAlertHandler()).Methods("GET")
 	router.Handle("/v1/alerts/{alertId}", UpdateAlertHandler()).Methods("PUT")
 	router.Handle("/v1/alerts/{alertId}", DeleteAlertHandler()).Methods("DELETE")
+	router.Handle("/v1/alerts/{alertId}/services", AssociateAlertHandler()).Methods("POST")
+	router.Handle("/v1/alerts/{alertId}/services/{serviceId}", DisassociateAlertHandler()).Methods("DELETE")
 
 	return router
 }

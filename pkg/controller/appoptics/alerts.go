@@ -61,7 +61,7 @@ func (as *AlertsService) Sync(spec v1.TokenAndDataSpec, status *v1.Status) (*v1.
 		aoAlert, err := as.Retrieve(status.ID)
 		if err != nil {
 			// If its a not found error thats ok we can try to create it now
-			if CheckIfErrorIsAppOpticsNotFoundError(err) {
+			if CheckIfErrorIsAppOpticsNotFoundError(err, Alert, status.ID) {
 				return as.createAlert(customAlert, status)
 			} else {
 				return nil, err
@@ -70,7 +70,7 @@ func (as *AlertsService) Sync(spec v1.TokenAndDataSpec, status *v1.Status) (*v1.
 			//Associate services, remove any already associated services and delete any non existing associations
 			for _, service := range aoAlert.Services {
 				index := -1
-				for  idx, customService := range notificationServices {
+				for idx, customService := range notificationServices {
 					if *customService.ID == *service.ID {
 						index = idx
 					}

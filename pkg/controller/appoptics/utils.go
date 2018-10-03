@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"encoding/json"
+	"github.com/golang/glog"
 )
 
 const (
@@ -15,13 +16,14 @@ const (
 	Service   = "service"
 )
 
-func CheckIfErrorIsAppOpticsNotFoundError(err error) bool {
+func CheckIfErrorIsAppOpticsNotFoundError(err error, kind string, id int) bool {
 	if errorResponse, ok := err.(*aoApi.ErrorResponse); ok {
 		errorObj := errorResponse.Errors.(map[string]interface{})
 		if requestErr, ok := errorObj["request"]; ok {
 			for _, errorType := range requestErr.([]interface{}) {
 				// The ID does not exist in AppOptics so create a new space
 				if strings.Compare(errorType.(string), "Not Found") == 0 {
+					glog.Warningf("Not Found in APPOPTICS type: %s (id: %d) was not found in AppOptics", kind, id)
 					return true
 				}
 			}

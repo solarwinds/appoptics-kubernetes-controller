@@ -18,43 +18,33 @@ type AOResourceCommunicator interface {
 }
 
 type AOCommunicator struct {
-	Token string
+	Client aoApi.Client
+}
+
+func NewAOCommunicator(token string) AOCommunicator {
+	client := aoApi.NewClient(token)
+	return AOCommunicator{*client}
 }
 
 func (aoc *AOCommunicator) Remove(ID int, kind string) error {
-	client := aoApi.NewClient(aoc.Token)
 	switch strings.ToLower(kind) {
 	case Dashboard:
-		chartsService := NewChartsService(client)
-		aoCharts, err := chartsService.List(ID)
-		if err != nil && !CheckIfErrorIsAppOpticsNotFoundError(err){
-			return err
-		}
-
-		// DELETE ALL AO CHARTS AND CREATE OURS
-		if len(aoCharts) != 0 {
-			err = chartsService.DeleteAll(aoCharts, ID)
-			if err != nil && !CheckIfErrorIsAppOpticsNotFoundError(err){
-				return err
-			}
-		}
-
 		// delete all charts
-		spacesService := NewSpacesService(client)
-		err = spacesService.Delete(ID)
-		if err != nil && !CheckIfErrorIsAppOpticsNotFoundError(err){
+		spacesService := NewSpacesService(&aoc.Client)
+		err := spacesService.Delete(ID)
+		if err != nil && !CheckIfErrorIsAppOpticsNotFoundError(err, kind, ID) {
 			return err
 		}
 	case Service:
-		servicesService := NewServicesService(client)
+		servicesService := NewServicesService(&aoc.Client)
 		err := servicesService.Delete(ID)
-		if err != nil && !CheckIfErrorIsAppOpticsNotFoundError(err){
+		if err != nil && !CheckIfErrorIsAppOpticsNotFoundError(err, kind, ID) {
 			return err
 		}
 	case Alert:
-		alertsService := NewAlertsService(client, nil)
+		alertsService := NewAlertsService(&aoc.Client, nil)
 		err := alertsService.Delete(ID)
-		if err != nil && !CheckIfErrorIsAppOpticsNotFoundError(err){
+		if err != nil && !CheckIfErrorIsAppOpticsNotFoundError(err, kind, ID) {
 			return err
 		}
 	}
@@ -62,16 +52,15 @@ func (aoc *AOCommunicator) Remove(ID int, kind string) error {
 }
 
 func (aoc *AOCommunicator) Sync(spec v1.TokenAndDataSpec, status *v1.Status, kind string, lister listers.ServiceNamespaceLister) (*v1.Status, error) {
-	client := aoApi.NewClient(aoc.Token)
 	switch strings.ToLower(kind) {
 	case Dashboard:
-		spacesService := NewSpacesService(client)
+		spacesService := NewSpacesService(&aoc.Client)
 		return spacesService.Sync(spec, status)
 	case Service:
-		servicesService := NewServicesService(client)
+		servicesService := NewServicesService(&aoc.Client)
 		return servicesService.Sync(spec, status)
 	case Alert:
-		alertService := NewAlertsService(client, lister)
+		alertService := NewAlertsService(&aoc.Client, lister)
 		return alertService.Sync(spec, status)
 	}
 	return status, nil
