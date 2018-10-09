@@ -7,7 +7,7 @@ import (
 // +genclient
 // +genclient:noStatus
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-type Dashboard struct {
+type AppOpticsDashboard struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata"`
 	Spec              TokenAndDataSpec `json:"spec"`
@@ -17,7 +17,7 @@ type Dashboard struct {
 // +genclient
 // +genclient:noStatus
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-type Service struct {
+type AppOpticsService struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata"`
 	Spec              TokenAndDataSpec `json:"spec"`
@@ -27,7 +27,7 @@ type Service struct {
 // +genclient
 // +genclient:noStatus
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-type Alert struct {
+type AppOpticsAlert struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata"`
 	Spec              TokenAndDataSpec `json:"spec"`
@@ -48,27 +48,27 @@ type Status struct {
 }
 
 type Hashes struct {
-	Spec      []byte `json:spec,omitempty`
-	AppOptics []byte `json:appoptics,omitempty`
+	Spec      []byte `json:"spec,omitempty"`
+	AppOptics []byte `json:"appoptics,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-type DashboardList struct {
+type AppOpticsDashboardList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata"`
-	Items           []Dashboard `json:"items"`
+	Items           []AppOpticsDashboard `json:"items"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-type ServiceList struct {
+type AppOpticsServiceList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata"`
-	Items           []Service `json:"items"`
+	Items           []AppOpticsService `json:"items"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-type AlertList struct {
+type AppOpticsAlertList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata"`
-	Items           []Alert `json:"items"`
+	Items           []AppOpticsAlert `json:"items"`
 }

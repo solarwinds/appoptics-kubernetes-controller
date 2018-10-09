@@ -127,7 +127,7 @@ func (maoc *mockAOCommunicator) Remove(ID int, kind string) error {
 	return nil
 }
 
-func (maoc *mockAOCommunicator) Sync(spec v1.TokenAndDataSpec, status *v1.Status, kind string, lister v12.ServiceNamespaceLister) (*v1.Status, error) {
+func (maoc *mockAOCommunicator) Sync(spec v1.TokenAndDataSpec, status *v1.Status, kind string, lister v12.AppOpticsServiceNamespaceLister) (*v1.Status, error) {
 	switch strings.ToLower(kind) {
 	case Dashboard:
 		spacesService := NewSpacesService(client)
@@ -150,16 +150,16 @@ type mockServiceLister struct {
 }
 
 // List lists all Services in the indexer for a given namespace.
-func (s mockServiceLister) List(selector labels.Selector) (ret []*v1.Service, err error) {
+func (s mockServiceLister) List(selector labels.Selector) (ret []*v1.AppOpticsService, err error) {
 	err = cache.ListAllByNamespace(s.indexer, s.namespace, selector, func(m interface{}) {
-		ret = append(ret, m.(*v1.Service))
+		ret = append(ret, m.(*v1.AppOpticsService))
 	})
 	return ret, err
 }
 
-func (msl *mockServiceLister) Get(name string) (*v1.Service, error) {
+func (msl *mockServiceLister) Get(name string) (*v1.AppOpticsService, error) {
 	tss := v1.Status{ID: 1}
-	service := v1.Service{Status: tss}
+	service := v1.AppOpticsService{Status: tss}
 	return &service, nil
 }
 

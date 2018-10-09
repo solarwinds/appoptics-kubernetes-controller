@@ -12,10 +12,10 @@ import (
 type AlertsService struct {
 	aoApi.AlertsService
 	client aoApi.Client
-	lister listers.ServiceNamespaceLister
+	lister listers.AppOpticsServiceNamespaceLister
 }
 
-func NewAlertsService(c *aoApi.Client, lister listers.ServiceNamespaceLister) *AlertsService {
+func NewAlertsService(c *aoApi.Client, lister listers.AppOpticsServiceNamespaceLister) *AlertsService {
 	return &AlertsService{*aoApi.NewAlertsService(c), *c, lister}
 }
 

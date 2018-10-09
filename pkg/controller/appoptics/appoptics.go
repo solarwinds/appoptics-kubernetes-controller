@@ -13,7 +13,7 @@ type AOResource interface {
 }
 
 type AOResourceCommunicator interface {
-	Sync(v1.TokenAndDataSpec, *v1.Status, string, listers.ServiceNamespaceLister) (*v1.Status, error)
+	Sync(v1.TokenAndDataSpec, *v1.Status, string, listers.AppOpticsServiceNamespaceLister) (*v1.Status, error)
 	Remove(int, string) error
 }
 
@@ -51,7 +51,7 @@ func (aoc *AOCommunicator) Remove(ID int, kind string) error {
 	return nil
 }
 
-func (aoc *AOCommunicator) Sync(spec v1.TokenAndDataSpec, status *v1.Status, kind string, lister listers.ServiceNamespaceLister) (*v1.Status, error) {
+func (aoc *AOCommunicator) Sync(spec v1.TokenAndDataSpec, status *v1.Status, kind string, lister listers.AppOpticsServiceNamespaceLister) (*v1.Status, error) {
 	switch strings.ToLower(kind) {
 	case Dashboard:
 		spacesService := NewSpacesService(&aoc.Client)
