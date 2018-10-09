@@ -50,7 +50,7 @@ func (c *Controller) syncHandler(key string) error {
 
 	switch kind {
 	case Dashboard:
-		dashboard, err := c.dashboardLister.Dashboards(namespace).Get(name)
+		dashboard, err := c.dashboardLister.AppOpticsDashboards(namespace).Get(name)
 		if err != nil {
 			if errors.IsNotFound(err) {
 				runtime.HandleError(fmt.Errorf("%s '%s' in work queue no longer exists", kind, key))
@@ -94,8 +94,8 @@ func (c *Controller) syncHandler(key string) error {
 			}
 			c.finalizers(&aoResource, remove)
 
-			uDashboard := v12.Dashboard(aoResource)
-			_, err := c.aoclientset.AppopticsV1().Dashboards(namespace).Update(&uDashboard)
+			uDashboard := v12.AppOpticsDashboard(aoResource)
+			_, err := c.aoclientset.AppopticsV1().AppOpticsDashboards(namespace).Update(&uDashboard)
 			if err != nil {
 				return err
 			}
@@ -108,19 +108,19 @@ func (c *Controller) syncHandler(key string) error {
 			return err
 		}
 
-		udashboard := v12.Dashboard(aoResource)
+		udashboard := v12.AppOpticsDashboard(aoResource)
 		dashboardCopy := udashboard.DeepCopy()
 
 		dashboardCopy.Status = *updateStatus
 
-		_, err = c.aoclientset.AppopticsV1().Dashboards(dashboard.Namespace).Update(dashboardCopy)
+		_, err = c.aoclientset.AppopticsV1().AppOpticsDashboards(dashboard.Namespace).Update(dashboardCopy)
 		if err != nil {
 			c.recorder.Event(dashboard, v1.EventTypeWarning, ErrUpdateStatus, err.Error())
 		} else {
 			c.recorder.Event(dashboardCopy, v1.EventTypeNormal, SuccessUpdate, MessageResourceUpdated)
 		}
 	case Service:
-		service, err := c.serviceLister.Services(namespace).Get(name)
+		service, err := c.serviceLister.AppOpticsServices(namespace).Get(name)
 		if err != nil {
 			if errors.IsNotFound(err) {
 				runtime.HandleError(fmt.Errorf("%s '%s' in work queue no longer exists", kind, key))
@@ -162,8 +162,8 @@ func (c *Controller) syncHandler(key string) error {
 			}
 			c.finalizers(&aoResource, remove)
 
-			uService := v12.Service(aoResource)
-			_, err := c.aoclientset.AppopticsV1().Services(namespace).Update(&uService)
+			uService := v12.AppOpticsService(aoResource)
+			_, err := c.aoclientset.AppopticsV1().AppOpticsServices(namespace).Update(&uService)
 			if err != nil {
 				return err
 			}
@@ -176,18 +176,18 @@ func (c *Controller) syncHandler(key string) error {
 			return err
 		}
 
-		uService := v12.Service(aoResource)
+		uService := v12.AppOpticsService(aoResource)
 		serviceCopy := uService.DeepCopy()
 		serviceCopy.Status = *updateStatus
 
-		_, err = c.aoclientset.AppopticsV1().Services(service.Namespace).Update(serviceCopy)
+		_, err = c.aoclientset.AppopticsV1().AppOpticsServices(service.Namespace).Update(serviceCopy)
 		if err != nil {
 			c.recorder.Event(service, v1.EventTypeWarning, ErrUpdateStatus, err.Error())
 		} else {
 			c.recorder.Event(serviceCopy, v1.EventTypeNormal, SuccessUpdate, MessageResourceUpdated)
 		}
 	case Alert:
-		alert, err := c.alertLister.Alerts(namespace).Get(name)
+		alert, err := c.alertLister.AppOpticsAlerts(namespace).Get(name)
 		if err != nil {
 			if errors.IsNotFound(err) {
 				runtime.HandleError(fmt.Errorf("%s '%s' in work queue no longer exists", kind, key))
@@ -230,8 +230,8 @@ func (c *Controller) syncHandler(key string) error {
 			}
 			c.finalizers(&aoResource, remove)
 
-			uAlerts := v12.Alert(aoResource)
-			_, err := c.aoclientset.AppopticsV1().Alerts(namespace).Update(&uAlerts)
+			uAlerts := v12.AppOpticsAlert(aoResource)
+			_, err := c.aoclientset.AppopticsV1().AppOpticsAlerts(namespace).Update(&uAlerts)
 			if err != nil {
 				return err
 			}
@@ -239,17 +239,17 @@ func (c *Controller) syncHandler(key string) error {
 		}
 
 		c.finalizers(&aoResource, add)
-		updateStatus, err = aoc.Sync(aoResource.Spec, updateStatus, kind, c.serviceLister.Services(namespace))
+		updateStatus, err = aoc.Sync(aoResource.Spec, updateStatus, kind, c.serviceLister.AppOpticsServices(namespace))
 		if err != nil {
 			return err
 		}
 
-		uAlert := v12.Alert(aoResource)
+		uAlert := v12.AppOpticsAlert(aoResource)
 		alertCopy := uAlert.DeepCopy()
 
 		alertCopy.Status = *updateStatus
 
-		_, err = c.aoclientset.AppopticsV1().Alerts(alert.Namespace).Update(alertCopy)
+		_, err = c.aoclientset.AppopticsV1().AppOpticsAlerts(alert.Namespace).Update(alertCopy)
 		if err != nil {
 			c.recorder.Event(alert, v1.EventTypeWarning, ErrUpdateStatus, err.Error())
 		} else {
@@ -267,6 +267,5 @@ func (c *Controller) GetCommunicator(secret *v1.Secret) (appoptics.AOCommunicato
 	} else {
 		return appoptics.AOCommunicator{}, errors.NewNotFound(schema.GroupResource{}, "token")
 	}
-	aoc := appoptics.AOCommunicator{Token: aoClientToken}
-	return aoc, nil
+	return appoptics.NewAOCommunicator(aoClientToken), nil
 }

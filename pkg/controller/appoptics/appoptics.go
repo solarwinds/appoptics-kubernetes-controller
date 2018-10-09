@@ -13,41 +13,54 @@ type AOResource interface {
 }
 
 type AOResourceCommunicator interface {
-	Sync(v1.TokenAndDataSpec, *v1.Status, string, listers.ServiceNamespaceLister) (*v1.Status, error)
+	Sync(v1.TokenAndDataSpec, *v1.Status, string, listers.AppOpticsServiceNamespaceLister) (*v1.Status, error)
 	Remove(int, string) error
 }
 
 type AOCommunicator struct {
-	Token string
+	Client aoApi.Client
+}
+
+func NewAOCommunicator(token string) AOCommunicator {
+	client := aoApi.NewClient(token)
+	return AOCommunicator{*client}
 }
 
 func (aoc *AOCommunicator) Remove(ID int, kind string) error {
-	client := aoApi.NewClient(aoc.Token)
 	switch strings.ToLower(kind) {
 	case Dashboard:
-		spacesService := NewSpacesService(client)
-		return spacesService.Delete(ID)
+		// delete all charts
+		spacesService := NewSpacesService(&aoc.Client)
+		err := spacesService.Delete(ID)
+		if err != nil && !CheckIfErrorIsAppOpticsNotFoundError(err, kind, ID) {
+			return err
+		}
 	case Service:
-		servicesService := NewServicesService(client)
-		return servicesService.Delete(ID)
+		servicesService := NewServicesService(&aoc.Client)
+		err := servicesService.Delete(ID)
+		if err != nil && !CheckIfErrorIsAppOpticsNotFoundError(err, kind, ID) {
+			return err
+		}
 	case Alert:
-		alertsService := NewAlertsService(client, nil)
-		return alertsService.Delete(ID)
+		alertsService := NewAlertsService(&aoc.Client, nil)
+		err := alertsService.Delete(ID)
+		if err != nil && !CheckIfErrorIsAppOpticsNotFoundError(err, kind, ID) {
+			return err
+		}
 	}
 	return nil
 }
 
-func (aoc *AOCommunicator) Sync(spec v1.TokenAndDataSpec, status *v1.Status, kind string, lister listers.ServiceNamespaceLister) (*v1.Status, error) {
-	client := aoApi.NewClient(aoc.Token)
+func (aoc *AOCommunicator) Sync(spec v1.TokenAndDataSpec, status *v1.Status, kind string, lister listers.AppOpticsServiceNamespaceLister) (*v1.Status, error) {
 	switch strings.ToLower(kind) {
 	case Dashboard:
-		spacesService := NewSpacesService(client)
+		spacesService := NewSpacesService(&aoc.Client)
 		return spacesService.Sync(spec, status)
 	case Service:
-		servicesService := NewServicesService(client)
+		servicesService := NewServicesService(&aoc.Client)
 		return servicesService.Sync(spec, status)
 	case Alert:
-		alertService := NewAlertsService(client, lister)
+		alertService := NewAlertsService(&aoc.Client, lister)
 		return alertService.Sync(spec, status)
 	}
 	return status, nil

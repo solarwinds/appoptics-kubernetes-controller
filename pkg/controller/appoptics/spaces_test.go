@@ -13,7 +13,7 @@ import (
 const spaceError = "spaceError"
 
 type SimpleSpace struct {
-	Name string `json:"name","omitempty"`
+	Name string `json:"name,omitempty"`
 }
 
 func TestSpacesService_Create(t *testing.T) {

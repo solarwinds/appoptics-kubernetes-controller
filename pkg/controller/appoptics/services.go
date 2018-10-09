@@ -32,7 +32,7 @@ func (ss *ServicesService) Sync(spec v1.TokenAndDataSpec, status *v1.Status) (*v
 		// Lets ensure that the ID we have exists in AppOptics
 		aoService, err := ss.Retrieve(status.ID)
 		if err != nil {
-			if CheckIfErrorIsAppOpticsNotFoundError(err) {
+			if CheckIfErrorIsAppOpticsNotFoundError(err, Service, status.ID) {
 				return ss.createService(service, status)
 			} else {
 				return nil, err

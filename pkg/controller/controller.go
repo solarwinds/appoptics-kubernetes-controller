@@ -35,9 +35,9 @@ type Controller struct {
 	kubeclientset   kubernetes.Interface
 	aoclientset     clientset.Interface
 	cachesSynced    []cache.InformerSynced
-	dashboardLister listers.DashboardLister
-	serviceLister   listers.ServiceLister
-	alertLister     listers.AlertLister
+	dashboardLister listers.AppOpticsDashboardLister
+	serviceLister   listers.AppOpticsServiceLister
+	alertLister     listers.AppOpticsAlertLister
 	workqueue       workqueue.RateLimitingInterface
 	recorder        record.EventRecorder
 	resyncTime      int64
@@ -52,13 +52,13 @@ func NewController(
 	resyncTime int64) *Controller {
 
 	var cachesSynced []cache.InformerSynced
-	dashboardInformer := aoInformerFactory.Appoptics().V1().Dashboards()
+	dashboardInformer := aoInformerFactory.Appoptics().V1().AppOpticsDashboards()
 	cachesSynced = append(cachesSynced, dashboardInformer.Informer().HasSynced)
 
-	serviceInformer := aoInformerFactory.Appoptics().V1().Services()
+	serviceInformer := aoInformerFactory.Appoptics().V1().AppOpticsServices()
 	cachesSynced = append(cachesSynced, serviceInformer.Informer().HasSynced)
 
-	alertInformer := aoInformerFactory.Appoptics().V1().Alerts()
+	alertInformer := aoInformerFactory.Appoptics().V1().AppOpticsAlerts()
 	cachesSynced = append(cachesSynced, alertInformer.Informer().HasSynced)
 
 	aoscheme.AddToScheme(scheme.Scheme)

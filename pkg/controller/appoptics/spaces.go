@@ -10,7 +10,7 @@ import (
 
 type CustomSpace struct {
 	aoApi.Space
-	Charts []*aoApi.Chart `json:"charts","omitempty"`
+	Charts []*aoApi.Chart `json:"charts,omitempty"`
 }
 
 type SpacesService struct {
@@ -74,7 +74,7 @@ func (s *SpacesService) sync(dash CustomSpace, status *v1.Status) (*v1.Status, e
 		aoSpace, err := s.Retrieve(status.ID)
 		if err != nil {
 			// If its a not found error thats ok we can try to create it now
-			if CheckIfErrorIsAppOpticsNotFoundError(err) {
+			if CheckIfErrorIsAppOpticsNotFoundError(err, Dashboard, status.ID) {
 				space, err := s.Create(dash.Name)
 				if err != nil {
 					return nil, err

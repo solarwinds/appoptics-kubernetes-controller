@@ -46,6 +46,39 @@ func TestExistingAlertSyncSuccess(t *testing.T) {
 	assert.Equal(t, ts1.ID, ts.ID)
 }
 
+func TestExistingAlertSyncWithNewServiceSuccess(t *testing.T) {
+
+	data := `
+               {
+        "name": "TEST",
+        "description": "ActiveControllerCount",
+        "conditions": [
+            {
+                "type": "below",
+                "metric_name": "kafka.controller.KafkaController.ActiveControllerCount",
+                "source": null,
+                "threshold": 1,
+                "duration": 60,
+                "summary_function": "count"
+            }
+        ],
+        "services": [],
+        "attributes": {"services": ["example"]},
+        "active": true,
+        "rearm_seconds": 120
+    }
+`
+	ts := v1.Status{ID: 3, LastUpdated: "Yesterday"}
+	td := v1.TokenAndDataSpec{Namespace: "Default", Data: data, Secret: "blah"}
+
+	ts1, err := aoc.Sync(td, &ts, Alert, NewMockLister())
+	if err != nil {
+		t.Errorf("error running TestExistingServiceSync: %v", err)
+	}
+
+	assert.Equal(t, ts1.ID, ts.ID)
+}
+
 func TestExistingAlertNotInAppOpticsSyncSuccess(t *testing.T) {
 	data := `
     {
@@ -201,13 +234,14 @@ func RetrieveAlertHandler() http.HandlerFunc {
    ],
   "services":[
       {
-         "id":17584,
+         "id":1,
          "type":"slack",
          "settings":{
             "url":"https://hooks.slack.com/services/XYZABC/a1b2c3/asdf"
          },
          "title":"appoptics-services"
       }
+      
    ],
   "attributes": {
     "runbook_url": "http://myco.com/runbooks/response_time"
@@ -250,5 +284,16 @@ func DeleteAlertHandler() http.HandlerFunc {
 		}
 		w.WriteHeader(http.StatusOK)
 		return
+	}
+}
+
+func DisassociateAlertHandler() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusCreated)
+	}
+}
+func AssociateAlertHandler() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusCreated)
 	}
 }

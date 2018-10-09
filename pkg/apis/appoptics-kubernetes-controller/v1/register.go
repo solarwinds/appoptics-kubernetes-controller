@@ -28,12 +28,12 @@ var (
 // Adds the list of known types to Scheme.
 func addKnownTypes(scheme *runtime.Scheme) error {
 	scheme.AddKnownTypes(SchemeGroupVersion,
-		&Dashboard{},
-		&DashboardList{},
-		&Service{},
-		&ServiceList{},
-		&Alert{},
-		&AlertList{},
+		&AppOpticsDashboard{},
+		&AppOpticsDashboardList{},
+		&AppOpticsService{},
+		&AppOpticsServiceList{},
+		&AppOpticsAlert{},
+		&AppOpticsAlertList{},
 	)
 	metav1.AddToGroupVersion(scheme, SchemeGroupVersion)
 	return nil
