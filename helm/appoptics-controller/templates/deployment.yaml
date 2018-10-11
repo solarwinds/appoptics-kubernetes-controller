@@ -2,27 +2,27 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   namespace: {{ .Values.namespace }}
-  name: {{ template "appoptics-kubernetes.fullname" . }}
+  name: {{ template "appoptics-controller.fullname" . }}
   labels:
-    app: {{ template "appoptics-kubernetes.name" . }}
-    chart: {{ template "appoptics-kubernetes.chart" . }}
+    app: {{ template "appoptics-controller.name" . }}
+    chart: {{ template "appoptics-controller.chart" . }}
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: {{ template "appoptics-kubernetes.name" . }}
+      app: {{ template "appoptics-controller.name" . }}
       release: {{ .Release.Name }}
   template:
     metadata:
       labels:
-        app: {{ template "appoptics-kubernetes.name" . }}
+        app: {{ template "appoptics-controller.name" . }}
         release: {{ .Release.Name }}
     spec:
-      serviceAccountName: {{ include "appoptics-kubernetes.fullname" . }}
+      serviceAccountName: {{ include "appoptics-controller.fullname" . }}
       containers:
-      - name: appoptics-kubernetes-controller
+      - name: appoptics-controller-controller
         image: {{ printf "%s/%s:%s" .Values.image.registry .Values.image.repository .Values.image.tag }}
         imagePullPolicy: {{ .Values.image.pullPolicy }}
         args:
