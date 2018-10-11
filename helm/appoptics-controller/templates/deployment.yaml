@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: {{ .Values.namespace }}
+  name: {{ template "appoptics-kubernetes.fullname" . }}
+  labels:
+    app: {{ template "appoptics-kubernetes.name" . }}
+    chart: {{ template "appoptics-kubernetes.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ template "appoptics-kubernetes.name" . }}
+      release: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app: {{ template "appoptics-kubernetes.name" . }}
+        release: {{ .Release.Name }}
+    spec:
+      serviceAccountName: {{ include "appoptics-kubernetes.fullname" . }}
+      containers:
+      - name: appoptics-kubernetes-controller
+        image: {{ printf "%s/%s:%s" .Values.image.registry .Values.image.repository .Values.image.tag }}
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        args:
+        - '-logtostderr=true'
+        - '-v={{ .Values.logLevel }}'
+        env:
+        - name: RESYNC_SECS
+          value: "{{ default 60 .Values.resyncInSecs }}"
+        resources:
+  {{ toYaml .Values.resources | indent 8 }}
