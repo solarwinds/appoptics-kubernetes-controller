@@ -1,0 +1,59 @@
+kind: ServiceAccount
+apiVersion: v1
+metadata:
+  name: {{ include "appoptics-controller.fullname" . }}
+  namespace: {{  .Values.namespace }}
+  labels:
+    app: {{ template "appoptics-controller.name" . }}
+    chart: {{ template "appoptics-controller.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+---
+# Get Secrets from Namespaces AND Emit Events
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: {{ include "appoptics-controller.fullname" . }}
+  labels:
+    app: {{ template "appoptics-controller.name" . }}
+    chart: {{ template "appoptics-controller.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+rules:
+- apiGroups:
+  - appoptics.io
+  resources:
+  - '*'
+  verbs:
+  - '*'
+- apiGroups:
+  - ''
+  resources:
+  - secrets
+  verbs:
+  - get
+- apiGroups:
+  - ''
+  resources:
+  - events
+  verbs:
+  - '*'
+---
+# Permissions to the service account for the resources in all namespaces
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: {{ include "appoptics-controller.fullname" . }}
+  labels:
+    app: {{ template "appoptics-controller.name" . }}
+    chart: {{ template "appoptics-controller.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+subjects:
+- kind: ServiceAccount
+  name: {{ include "appoptics-controller.fullname" . }}
+  namespace: {{  .Values.namespace }}
+roleRef:
+  kind: ClusterRole
+  name: {{ include "appoptics-controller.fullname" . }}
+  apiGroup: rbac.authorization.k8s.io
