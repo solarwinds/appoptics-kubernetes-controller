@@ -6,7 +6,7 @@ namespace: default
 
 image:
   registry: docker.io
-  repository: appoptics/appoptics-controller-controller
+  repository: appoptics/appoptics-kubernetes-controller
   tag: "0.1"
   pullPolicy: IfNotPresent
 
