@@ -1,5 +1,5 @@
 apiVersion: "appoptics.io/v1"
-kind: "Service"
+kind: "AppOpticsService"
 metadata:
   name: exampleservice
   namespace: default
