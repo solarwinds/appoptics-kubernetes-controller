@@ -1,5 +1,5 @@
 apiVersion: "appoptics.io/v1"
-kind: Alert
+kind: AppOpticsAlert
 metadata:
   name: examplealert
   namespace: default
