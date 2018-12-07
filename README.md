@@ -12,7 +12,7 @@
 
 The `appoptics-kubernetes-controller` is a Kubernetes controller (a.k.a. an operator) that provides a Kubernetes-native interface for managing select AppOptics resources. Currently, the controller manages the following custom resources:
 
-- `Alerts`, `Dashboards` and `Services`
+- `AppOpticsAlerts`, `AppOpticsDashboards` and `AppOpticsServices`
 
 Using an AppOptics token you provide, the controller will create thes resources your AppOptics account. This controller ensures these AppOptics resources conform to the values you define in the `Spec`.
   
@@ -56,7 +56,7 @@ Note: `-v=1 -logtostderr=true` are not required but it's useful to see some logs
 This will create a secret object with the name "appoptics" in your name space within your CRDs you can reference this by defining your secret name in the spec eg 
 ```
 apiVersion: "appoptics.io/v1"  
-kind: "Service"  
+kind: "AppOpticsService"
 metadata:  
   name: exampleservice  
   namespace: Your Namespace  
@@ -108,3 +108,7 @@ After that you can build and push the docker image to `docker.com/solarwinds/app
 # Questions/Comments
 
 Please open an [issue](/issues). We'd love to hear from you. As a SolarWinds Innovation Project, this adapter is supported in a best-effort fashion.
+
+# Licencing
+Based on Sample Controller https://github.com/kubernetes/sample-controller
+Make commands based on Helm makefile https://github.com/helm/helm/blob/master/Makefile
