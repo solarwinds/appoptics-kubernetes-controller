@@ -109,7 +109,7 @@ After that you can build and push the docker image to `docker.com/solarwinds/app
 
 Please open an [issue](/issues). We'd love to hear from you.
 
-## Licencing
+## Licensing
 Released under Apache 2
 
 ## Heritage
