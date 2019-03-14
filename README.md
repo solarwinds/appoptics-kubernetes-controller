@@ -105,10 +105,13 @@ After that you can build and push the docker image to `docker.com/solarwinds/app
     * `app=appoptics-kubernetes-controller`  
     * `version=IMAGE_TAG-GIT_COMMIT`  
     
-# Questions/Comments
+## Questions/Comments
 
-Please open an [issue](/issues). We'd love to hear from you. As a SolarWinds Innovation Project, this adapter is supported in a best-effort fashion.
+Please open an [issue](/issues). We'd love to hear from you.
 
-# Licencing
-Based on Sample Controller https://github.com/kubernetes/sample-controller
-Make commands based on Helm makefile https://github.com/helm/helm/blob/master/Makefile
+## Licensing
+Released under Apache 2
+
+## Heritage
+* Based on Sample Controller https://github.com/kubernetes/sample-controller
+* Make commands based on Helm makefile https://github.com/helm/helm/blob/master/Makefile
