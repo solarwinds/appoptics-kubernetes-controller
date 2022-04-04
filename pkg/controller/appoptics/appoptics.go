@@ -1,10 +1,11 @@
 package appoptics
 
 import (
-	aoApi "github.com/appoptics/appoptics-api-go"
-	"github.com/solarwinds/appoptics-kubernetes-controller/pkg/apis/appoptics-kubernetes-controller/v1"
-	listers "github.com/solarwinds/appoptics-kubernetes-controller/pkg/client/listers/appoptics-kubernetes-controller/v1"
 	"strings"
+
+	aoApi "github.com/appoptics/appoptics-api-go"
+	v1 "github.com/solarwinds/appoptics-kubernetes-controller/pkg/apis/appopticskubernetescontroller/v1"
+	listers "github.com/solarwinds/appoptics-kubernetes-controller/pkg/generated/listers/appopticskubernetescontroller/v1"
 )
 
 type AOResource interface {

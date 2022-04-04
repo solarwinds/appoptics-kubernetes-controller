@@ -8,6 +8,8 @@ BUILD_TAG := build
 BINPATH := ./bin
 NAMESPACE := default
 
+appname=appoptics-kubernetes-controller
+
 # Path to dockerfiles directory
 DOCKERFILES := $(HACK_DIR)/build
 # A list of all types.go files in pkg/apis
@@ -77,6 +79,14 @@ go_fmt:
 
 add_token:
 	kubectl --namespace $(NAMESPACE) create secret generic appoptics --from-literal=token=$(APPOPTICS_TOKEN)
+
+buildall:
+	env CGO_ENABLED= GOOS="linux" GOARCH="amd64" go build -trimpath -buildmode=pie -ldflags "-s -w" -o  build/$(appname)-linux-amd64
+	env CGO_ENABLED= GOOS="linux" GOARCH="arm64" go build -trimpath -buildmode=pie -ldflags "-s -w" -o  build/$(appname)-linux-arm64
+	env CGO_ENABLED= GOOS="darwin" GOARCH="amd64" go build -trimpath -buildmode=pie -ldflags "-s -w" -o  build/$(appname)-darwin-amd64
+	env CGO_ENABLED= GOOS="darwin" GOARCH="arm64" go build -trimpath -buildmode=pie -ldflags "-s -w" -o  build/$(appname)-darwin-arm64
+	env CGO_ENABLED= GOOS="windows" GOARCH="amd64" go build -trimpath -buildmode=pie -ldflags "-s -w" -o  build/$(appname)-windows-amd64
+	cd build && sha256sum -b * > checksums_sha256.txt
 
 # Docker targets
 ################

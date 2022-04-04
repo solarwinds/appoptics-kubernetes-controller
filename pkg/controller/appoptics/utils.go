@@ -2,12 +2,14 @@ package appoptics
 
 import (
 	"crypto/sha1"
-	aoApi "github.com/appoptics/appoptics-api-go"
 	"io"
 	"strings"
 
+	aoApi "github.com/appoptics/appoptics-api-go"
+
 	"encoding/json"
-	"github.com/golang/glog"
+
+	"k8s.io/klog/v2"
 )
 
 const (
@@ -23,7 +25,7 @@ func CheckIfErrorIsAppOpticsNotFoundError(err error, kind string, id int) bool {
 			for _, errorType := range requestErr.([]interface{}) {
 				// The ID does not exist in AppOptics so create a new space
 				if strings.Compare(errorType.(string), "Not Found") == 0 {
-					glog.Warningf("Not Found in APPOPTICS type: %s (id: %d) was not found in AppOptics", kind, id)
+					klog.Warningf("Not Found in APPOPTICS type: %s (id: %d) was not found in AppOptics", kind, id)
 					return true
 				}
 			}

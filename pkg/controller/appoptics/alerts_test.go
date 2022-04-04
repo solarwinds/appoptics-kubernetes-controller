@@ -1,14 +1,15 @@
 package appoptics
 
 import (
-	aoApi "github.com/appoptics/appoptics-api-go"
-	"github.com/gorilla/mux"
-	"github.com/solarwinds/appoptics-kubernetes-controller/pkg/apis/appoptics-kubernetes-controller/v1"
-	"github.com/stretchr/testify/assert"
 	"net/http"
 	"strconv"
 	"strings"
 	"testing"
+
+	aoApi "github.com/appoptics/appoptics-api-go"
+	"github.com/gorilla/mux"
+	v1 "github.com/solarwinds/appoptics-kubernetes-controller/pkg/apis/appopticskubernetescontroller/v1"
+	"github.com/stretchr/testify/assert"
 )
 
 const errorName = "Error"
@@ -149,7 +150,7 @@ func CreateAlertHandler() http.HandlerFunc {
 			http.Error(w, "Malformed Data", http.StatusInternalServerError)
 		}
 
-		if strings.Compare(*alert.Name, "Error") == 0 {
+		if strings.Compare(alert.Name, "Error") == 0 {
 			http.Error(w, `{"errors":{"request":["Internal Server Error"]}}`, http.StatusInternalServerError)
 			return
 		}

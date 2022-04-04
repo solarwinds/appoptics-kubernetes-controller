@@ -23,19 +23,22 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/golang/glog"
 	kubeinformers "k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/tools/clientcmd"
-	// required to run with tectonic auth
-	_ "k8s.io/client-go/plugin/pkg/client/auth/oidc"
+	"k8s.io/klog/v2"
 
-	clientset "github.com/solarwinds/appoptics-kubernetes-controller/pkg/client/clientset/versioned"
-	aoscheme "github.com/solarwinds/appoptics-kubernetes-controller/pkg/client/clientset/versioned/scheme"
-	informers "github.com/solarwinds/appoptics-kubernetes-controller/pkg/client/informers/externalversions"
-	"github.com/solarwinds/appoptics-kubernetes-controller/pkg/controller"
+	// Uncomment the following line to load the gcp plugin (only required to authenticate against GKE clusters).
+	// _ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
+
+	clientset "github.com/solarwinds/appoptics-kubernetes-controller/pkg/generated/clientset/versioned"
+	aoscheme "github.com/solarwinds/appoptics-kubernetes-controller/pkg/generated/clientset/versioned/scheme"
+	informers "github.com/solarwinds/appoptics-kubernetes-controller/pkg/generated/informers/externalversions"
+
 	"github.com/solarwinds/appoptics-kubernetes-controller/pkg/signals"
+
+	co "github.com/solarwinds/appoptics-kubernetes-controller/pkg/controller"
 )
 
 var (
@@ -43,11 +46,12 @@ var (
 	kubeconfig string
 )
 
+const controllerAgentName = "appoptics"
 const namespaceEnvVar = "NAMESPACE"
 const resyncEnvVar = "RESYNC_SECS"
-const controllerAgentName = "appoptics"
 
 func main() {
+	klog.InitFlags(nil)
 	flag.Parse()
 
 	// set up signals so we handle the first shutdown signal gracefully
@@ -55,42 +59,42 @@ func main() {
 
 	cfg, err := clientcmd.BuildConfigFromFlags(masterURL, kubeconfig)
 	if err != nil {
-		glog.Fatalf("Error building kubeconfig: %s", err.Error())
+		klog.Fatalf("Error building kubeconfig: %s", err.Error())
 	}
 
 	kubeClient, err := kubernetes.NewForConfig(cfg)
 	if err != nil {
-		glog.Fatalf("Error building kubernetes clientset: %s", err.Error())
+		klog.Fatalf("Error building kubernetes clientset: %s", err.Error())
 	}
 
 	aoClient, err := clientset.NewForConfig(cfg)
 	if err != nil {
-		glog.Fatalf("Error building ao clientset: %s", err.Error())
+		klog.Fatalf("Error building ao clientset: %s", err.Error())
 	}
 
 	resyncInSecs, err := getResync()
 	if err != nil {
-		glog.Fatalf("Error getting ao resync time: %s", err.Error())
+		klog.Fatalf("Error getting ao resync time: %s", err.Error())
 	}
 
 	kubeInformerFactory := kubeinformers.NewSharedInformerFactory(kubeClient, time.Second*time.Duration(resyncInSecs))
 
 	aoInformerFactory, err := getAppOpticsInformerFactory(aoClient, time.Second*time.Duration(resyncInSecs))
 	if err != nil {
-		glog.Fatalf("Error getting ao namespace: %s", err.Error())
+		klog.Fatalf("Error getting ao namespace: %s", err.Error())
 	}
 	customScheme := scheme.Scheme
 	aoscheme.AddToScheme(customScheme)
 
-	controller := controller.NewController(kubeClient, aoClient, aoInformerFactory, controllerAgentName, resyncInSecs)
+	controller := co.NewController(kubeClient, aoClient, aoInformerFactory, controllerAgentName, resyncInSecs)
 
-	go kubeInformerFactory.Start(stopCh)
-	go aoInformerFactory.Start(stopCh)
+	// notice that there is no need to run Start methods in a separate goroutine. (i.e. go kubeInformerFactory.Start(stopCh)
+	// Start method is non-blocking and runs all registered informers in a dedicated goroutine.
+	kubeInformerFactory.Start(stopCh)
+	aoInformerFactory.Start(stopCh)
 
-	// If we want more workers... just change the first param from 1 to
-	// the number of workers we want!
-	if err = controller.Run(1, stopCh); err != nil {
-		glog.Fatalf("Error running controller: %s", err.Error())
+	if err = controller.Run(2, stopCh); err != nil {
+		klog.Fatalf("Error running controller: %s", err.Error())
 	}
 }
 
@@ -126,16 +130,16 @@ func getEnvVar(name string) (string, error) {
 	return v, nil
 }
 
-func getAppOpticsInformerFactory(client *clientset.Clientset, resyncSeconds time.Duration) (informers.SharedInformerFactory, error) {
+func getAppOpticsInformerFactory(client *clientset.Clientset, resync time.Duration) (informers.SharedInformerFactory, error) {
 	_, namespaced := os.LookupEnv(namespaceEnvVar)
 	if namespaced {
 		aoNamespace, err := getNamespace()
 		if err != nil {
 			return nil, err
 		}
-		return informers.NewFilteredSharedInformerFactory(client, resyncSeconds, aoNamespace, nil), nil
+		return informers.NewFilteredSharedInformerFactory(client, resync, aoNamespace, nil), nil
 	}
 
-	return informers.NewSharedInformerFactory(client, resyncSeconds), nil
+	return informers.NewSharedInformerFactory(client, resync), nil
 
 }

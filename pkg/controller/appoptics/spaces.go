@@ -2,10 +2,11 @@ package appoptics
 
 import (
 	"bytes"
+	"strings"
+
 	aoApi "github.com/appoptics/appoptics-api-go"
 	"github.com/ghodss/yaml"
-	"github.com/solarwinds/appoptics-kubernetes-controller/pkg/apis/appoptics-kubernetes-controller/v1"
-	"strings"
+	v1 "github.com/solarwinds/appoptics-kubernetes-controller/pkg/apis/appopticskubernetescontroller/v1"
 )
 
 type CustomSpace struct {
@@ -86,7 +87,7 @@ func (s *SpacesService) sync(dash CustomSpace, status *v1.Status) (*v1.Status, e
 		} else {
 			//Service exists in AppOptics now lets check that they are actually synced
 			if strings.Compare(aoSpace.Name, dash.Name) != 0 {
-				_, err = s.Update(status.ID, dash.Name)
+				err = s.Update(status.ID, dash.Name)
 				if err != nil {
 					return nil, err
 				}

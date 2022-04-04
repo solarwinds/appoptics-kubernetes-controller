@@ -2,13 +2,14 @@ package appoptics
 
 import (
 	"encoding/base64"
+	"net/http"
+	"strconv"
+	"testing"
+
 	aoApi "github.com/appoptics/appoptics-api-go"
 	"github.com/ghodss/yaml"
 	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/assert"
-	"net/http"
-	"strconv"
-	"testing"
 )
 
 func TestDeletingChartsInAppOptics(t *testing.T) {
@@ -247,7 +248,7 @@ func CreateChartHandler() http.HandlerFunc {
 			return
 		}
 
-		if *chart.ID == testInternalServerErrorId {
+		if chart.ID == testInternalServerErrorId {
 			http.Error(w, `{"errors":{"request":["Internal Server Error"]}}`, http.StatusInternalServerError)
 			return
 		}

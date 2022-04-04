@@ -2,14 +2,17 @@ package appoptics
 
 import (
 	aoApi "github.com/appoptics/appoptics-api-go"
-	"github.com/solarwinds/appoptics-kubernetes-controller/pkg/apis/appoptics-kubernetes-controller/v1"
-	"github.com/stretchr/testify/assert"
+	v1 "github.com/solarwinds/appoptics-kubernetes-controller/pkg/apis/appopticskubernetescontroller/v1"
+
 	"net/http"
 	"strings"
 	"testing"
 
-	"github.com/gorilla/mux"
+	"github.com/stretchr/testify/assert"
+
 	"strconv"
+
+	"github.com/gorilla/mux"
 )
 
 // This tests an Existing Service in AppOptics being successfully updates
@@ -198,7 +201,7 @@ func CreateServiceHandler() http.HandlerFunc {
 			return
 		}
 
-		if *service.Title == "NewServiceCreateError" {
+		if service.Title == "NewServiceCreateError" {
 			http.Error(w, `{"errors":{"request":["Test Error"]}}`, http.StatusInternalServerError)
 			return
 		}
@@ -251,7 +254,7 @@ func UpdateServiceHandler() http.HandlerFunc {
 			http.Error(w, "Malformed Data", http.StatusInternalServerError)
 		}
 
-		if strings.Compare(*service.Title, "NewServiceError") == 0 {
+		if strings.Compare(service.Title, "NewServiceError") == 0 {
 			http.Error(w, `{"errors":{"request":["Test Error"]}}`, http.StatusInternalServerError)
 			return
 		}
