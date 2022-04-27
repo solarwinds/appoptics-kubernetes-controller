@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -78,7 +79,7 @@ func (c *Controller) syncHandler(key string) error {
 
 		aoResource := CommonAOResource(*dashboard)
 
-		secret, err := c.kubeclientset.CoreV1().Secrets(namespace).Get(nil, aoResource.Spec.Secret, metav1.GetOptions{})
+		secret, err := c.kubeclientset.CoreV1().Secrets(namespace).Get(context.Background(), aoResource.Spec.Secret, metav1.GetOptions{})
 		if err != nil {
 			return err
 		}
@@ -96,7 +97,7 @@ func (c *Controller) syncHandler(key string) error {
 			c.finalizers(&aoResource, remove)
 
 			uDashboard := v12.AppOpticsDashboard(aoResource)
-			_, err := c.aoclientset.AppopticsV1().AppOpticsDashboards(namespace).Update(nil, &uDashboard, metav1.UpdateOptions{})
+			_, err := c.aoclientset.AppopticsV1().AppOpticsDashboards(namespace).Update(context.Background(), &uDashboard, metav1.UpdateOptions{})
 			if err != nil {
 				return err
 			}
@@ -114,7 +115,7 @@ func (c *Controller) syncHandler(key string) error {
 
 		dashboardCopy.Status = *updateStatus
 
-		_, err = c.aoclientset.AppopticsV1().AppOpticsDashboards(dashboard.Namespace).Update(nil, dashboardCopy, metav1.UpdateOptions{})
+		_, err = c.aoclientset.AppopticsV1().AppOpticsDashboards(dashboard.Namespace).Update(context.Background(), dashboardCopy, metav1.UpdateOptions{})
 		if err != nil {
 			c.recorder.Event(dashboard, v1.EventTypeWarning, ErrUpdateStatus, err.Error())
 		} else {
@@ -146,7 +147,7 @@ func (c *Controller) syncHandler(key string) error {
 		updateStatus.LastUpdated = currentTime.Format(DateFormat)
 		aoResource := CommonAOResource(*service)
 
-		secret, err := c.kubeclientset.CoreV1().Secrets(namespace).Get(nil, aoResource.Spec.Secret, metav1.GetOptions{})
+		secret, err := c.kubeclientset.CoreV1().Secrets(namespace).Get(context.Background(), aoResource.Spec.Secret, metav1.GetOptions{})
 		if err != nil {
 			return err
 		}
@@ -164,7 +165,7 @@ func (c *Controller) syncHandler(key string) error {
 			c.finalizers(&aoResource, remove)
 
 			uService := v12.AppOpticsService(aoResource)
-			_, err := c.aoclientset.AppopticsV1().AppOpticsServices(namespace).Update(nil, &uService, metav1.UpdateOptions{})
+			_, err := c.aoclientset.AppopticsV1().AppOpticsServices(namespace).Update(context.Background(), &uService, metav1.UpdateOptions{})
 			if err != nil {
 				return err
 			}
@@ -181,7 +182,7 @@ func (c *Controller) syncHandler(key string) error {
 		serviceCopy := uService.DeepCopy()
 		serviceCopy.Status = *updateStatus
 
-		_, err = c.aoclientset.AppopticsV1().AppOpticsServices(service.Namespace).Update(nil, serviceCopy, metav1.UpdateOptions{})
+		_, err = c.aoclientset.AppopticsV1().AppOpticsServices(service.Namespace).Update(context.Background(), serviceCopy, metav1.UpdateOptions{})
 		if err != nil {
 			c.recorder.Event(service, v1.EventTypeWarning, ErrUpdateStatus, err.Error())
 		} else {
@@ -214,7 +215,7 @@ func (c *Controller) syncHandler(key string) error {
 		updateStatus.LastUpdated = currentTime.Format(DateFormat)
 		aoResource := CommonAOResource(*alert)
 
-		secret, err := c.kubeclientset.CoreV1().Secrets(namespace).Get(nil, aoResource.Spec.Secret, metav1.GetOptions{})
+		secret, err := c.kubeclientset.CoreV1().Secrets(namespace).Get(context.Background(), aoResource.Spec.Secret, metav1.GetOptions{})
 		if err != nil {
 			return err
 		}
@@ -232,7 +233,7 @@ func (c *Controller) syncHandler(key string) error {
 			c.finalizers(&aoResource, remove)
 
 			uAlerts := v12.AppOpticsAlert(aoResource)
-			_, err := c.aoclientset.AppopticsV1().AppOpticsAlerts(namespace).Update(nil, &uAlerts, metav1.UpdateOptions{})
+			_, err := c.aoclientset.AppopticsV1().AppOpticsAlerts(namespace).Update(context.Background(), &uAlerts, metav1.UpdateOptions{})
 			if err != nil {
 				return err
 			}
@@ -250,7 +251,7 @@ func (c *Controller) syncHandler(key string) error {
 
 		alertCopy.Status = *updateStatus
 
-		_, err = c.aoclientset.AppopticsV1().AppOpticsAlerts(alert.Namespace).Update(nil, alertCopy, metav1.UpdateOptions{})
+		_, err = c.aoclientset.AppopticsV1().AppOpticsAlerts(alert.Namespace).Update(context.Background(), alertCopy, metav1.UpdateOptions{})
 		if err != nil {
 			c.recorder.Event(alert, v1.EventTypeWarning, ErrUpdateStatus, err.Error())
 		} else {
