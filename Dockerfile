@@ -1,13 +1,9 @@
-FROM alpine:3.8
+FROM docker.io/golang:alpine3.15 AS build
+WORKDIR /akc
+ADD . /akc
+RUN go mod tidy && env CGO_ENABLED=0 go build -trimpath -buildmode=pie -ldflags "-s -w" -o appoptics_kubernetes_controller
 
-RUN adduser -D appoptics
-RUN apk --update add ca-certificates
-USER appoptics
-
-ADD bin/appoptics/appoptics-kubernetes-controller-linux_amd64 /usr/local/bin/appoptics_kubernetes_controller-linux_amd64
-
-ENTRYPOINT ["/usr/local/bin/appoptics_kubernetes_controller-linux_amd64"]
-ARG VCS_REF
-LABEL org.label-schema.vcs-ref=$VCS_REF \
-      org.label-schema.vcs-url="https://github.com/solarwinds/appoptics_kubernetes_controller" \
-      org.label-schema.license="Apache-2.0"
+FROM alpine:latest
+COPY --from=build --chown=1000:1000 /akc/appoptics_kubernetes_controller /appoptics_kubernetes_controller
+USER 1000:1000
+ENTRYPOINT ["/appoptics_kubernetes_controller"]

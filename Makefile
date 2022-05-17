@@ -28,7 +28,7 @@ GOLDFLAGS := -ldflags "-X $(PACKAGE_NAME)/pkg/util.AppGitCommit=${GIT_COMMIT} -X
 # Alias targets
 ###############
 
-build: go_dep generate generate_verify go_test appoptics_controller # docker_build
+build: generate generate_verify go_test appoptics_controller # docker_build
 verify: generate_verify go_verify
 #push: build docker_push
 
@@ -45,8 +45,6 @@ generate_verify:
 #################
 go_verify: go_fmt go_test
 
-go_dep:
-	dep ensure -v
 
 appoptics_controller:
 	CGO_ENABLED=0 GOOS=$(GOOS) GOARCH=$(GOARCH) go build \
@@ -68,14 +66,6 @@ go_test:
 coverage: go_test
 	go tool cover -html=coverage.out
 
-go_fmt:
-	@set -e; \
-	GO_FMT=$$(git ls-files *.go | grep -v 'vendor/' | xargs gofmt -d); \
-	if [ -n "$${GO_FMT}" ] ; then \
-		echo "Please run go fmt"; \
-		echo "$$GO_FMT"; \
-		exit 1; \
-	fi
 
 add_token:
 	kubectl --namespace $(NAMESPACE) create secret generic appoptics --from-literal=token=$(APPOPTICS_TOKEN)
