@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: appoptics-controller
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: appoptics-controller
+  template:
+    metadata:
+      labels:
+        app: appoptics-controller
+    spec:
+      containers:
+      - args:
+        - -logtostderr=true
+        - -v=1
+        env:
+        - name: RESYNC_SECS
+          value: "60"
+        image: ghcr.io/varbhat/appoptics-kubernetes-controller:latest
+        imagePullPolicy: IfNotPresent
+        name: appoptics-controller-controller
+        requests:
+          cpu: 50m
+          memory: 50Mi
+        resources:
+          cpu: 50m
+          memory: 50Mi
+      serviceAccountName: appoptics-controller
