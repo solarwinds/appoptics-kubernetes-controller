@@ -2,11 +2,12 @@ package appoptics
 
 import (
 	"encoding/json"
-	aoApi "github.com/appoptics/appoptics-api-go"
-	"github.com/ghodss/yaml"
-	"github.com/solarwinds/appoptics-kubernetes-controller/pkg/apis/appoptics-kubernetes-controller/v1"
 	"reflect"
 	"time"
+
+	aoApi "github.com/appoptics/appoptics-api-go"
+	"github.com/ghodss/yaml"
+	v1 "github.com/solarwinds/appoptics-kubernetes-controller/pkg/apis/appopticskubernetescontroller/v1"
 )
 
 type ServicesService struct {
@@ -39,7 +40,7 @@ func (ss *ServicesService) Sync(spec v1.TokenAndDataSpec, status *v1.Status) (*v
 			}
 		} else {
 			//Service exists in AppOptics now lets check that they are actually synced
-			service.ID = &status.ID
+			service.ID = status.ID
 			if !reflect.DeepEqual(&service, aoService) {
 				// Local vs Remote are different so update AO
 				err = ss.Update(&service)
@@ -68,7 +69,7 @@ func (ss *ServicesService) createService(service aoApi.Service, status *v1.Statu
 	if err != nil {
 		return nil, err
 	}
-	status.ID = *aoService.ID
+	status.ID = aoService.ID
 	status.UpdatedAt = int(time.Now().Unix())
 	hash, err := json.Marshal(aoService)
 	if err != nil {

@@ -15,7 +15,7 @@ func NewChartsService(c *aoApi.Client) *ChartsService {
 
 func (chrt *ChartsService) DeleteAll(charts []*aoApi.Chart, spaceID int) error {
 	for _, chart := range charts {
-		err := chrt.Delete(*chart.ID, spaceID)
+		err := chrt.Delete(chart.ID, spaceID)
 		if err != nil {
 			return err
 		}

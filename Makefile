@@ -8,6 +8,8 @@ BUILD_TAG := build
 BINPATH := ./bin
 NAMESPACE := default
 
+appname=appoptics-kubernetes-controller
+
 # Path to dockerfiles directory
 DOCKERFILES := $(HACK_DIR)/build
 # A list of all types.go files in pkg/apis
@@ -26,7 +28,7 @@ GOLDFLAGS := -ldflags "-X $(PACKAGE_NAME)/pkg/util.AppGitCommit=${GIT_COMMIT} -X
 # Alias targets
 ###############
 
-build: go_dep generate generate_verify go_test appoptics_controller # docker_build
+build: generate generate_verify go_test appoptics_controller # docker_build
 verify: generate_verify go_verify
 #push: build docker_push
 
@@ -43,8 +45,6 @@ generate_verify:
 #################
 go_verify: go_fmt go_test
 
-go_dep:
-	dep ensure -v
 
 appoptics_controller:
 	CGO_ENABLED=0 GOOS=$(GOOS) GOARCH=$(GOARCH) go build \
@@ -66,17 +66,17 @@ go_test:
 coverage: go_test
 	go tool cover -html=coverage.out
 
-go_fmt:
-	@set -e; \
-	GO_FMT=$$(git ls-files *.go | grep -v 'vendor/' | xargs gofmt -d); \
-	if [ -n "$${GO_FMT}" ] ; then \
-		echo "Please run go fmt"; \
-		echo "$$GO_FMT"; \
-		exit 1; \
-	fi
 
 add_token:
 	kubectl --namespace $(NAMESPACE) create secret generic appoptics --from-literal=token=$(APPOPTICS_TOKEN)
+
+buildall:
+	env CGO_ENABLED= GOOS="linux" GOARCH="amd64" go build -trimpath -buildmode=pie -ldflags "-s -w" -o  build/$(appname)-linux-amd64
+	env CGO_ENABLED= GOOS="linux" GOARCH="arm64" go build -trimpath -buildmode=pie -ldflags "-s -w" -o  build/$(appname)-linux-arm64
+	env CGO_ENABLED= GOOS="darwin" GOARCH="amd64" go build -trimpath -buildmode=pie -ldflags "-s -w" -o  build/$(appname)-darwin-amd64
+	env CGO_ENABLED= GOOS="darwin" GOARCH="arm64" go build -trimpath -buildmode=pie -ldflags "-s -w" -o  build/$(appname)-darwin-arm64
+	env CGO_ENABLED= GOOS="windows" GOARCH="amd64" go build -trimpath -buildmode=pie -ldflags "-s -w" -o  build/$(appname)-windows-amd64
+	cd build && sha256sum -b * > checksums_sha256.txt
 
 # Docker targets
 ################

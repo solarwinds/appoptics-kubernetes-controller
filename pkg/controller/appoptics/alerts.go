@@ -3,10 +3,12 @@ package appoptics
 import (
 	"bytes"
 	"encoding/json"
+
 	aoApi "github.com/appoptics/appoptics-api-go"
 	"github.com/ghodss/yaml"
-	"github.com/solarwinds/appoptics-kubernetes-controller/pkg/apis/appoptics-kubernetes-controller/v1"
-	listers "github.com/solarwinds/appoptics-kubernetes-controller/pkg/client/listers/appoptics-kubernetes-controller/v1"
+
+	v1 "github.com/solarwinds/appoptics-kubernetes-controller/pkg/apis/appopticskubernetescontroller/v1"
+	listers "github.com/solarwinds/appoptics-kubernetes-controller/pkg/generated/listers/appopticskubernetescontroller/v1"
 )
 
 type AlertsService struct {
@@ -28,17 +30,17 @@ func (as *AlertsService) Sync(spec v1.TokenAndDataSpec, status *v1.Status) (*v1.
 	if err != nil {
 		return nil, err
 	}
-	specChanged := bytes.Compare(specHash, status.Hashes.Spec) != 0
+	specChanged := !bytes.Equal(specHash, status.Hashes.Spec)
 	if specChanged {
 		status.Hashes.Spec = specHash
 	}
-	var customAlert aoApi.Alert
+	var customAlert aoApi.AlertRequest
 	err = yaml.Unmarshal([]byte(spec.Data), &customAlert)
 	if err != nil {
 		return nil, err
 	}
 
-	var notificationServices []*aoApi.Service
+	var notificationServices []int
 	if services, ok := customAlert.Attributes["services"]; ok {
 		for _, serviceObj := range services.([]interface{}) {
 			serviceStr := serviceObj.(string)
@@ -47,7 +49,7 @@ func (as *AlertsService) Sync(spec v1.TokenAndDataSpec, status *v1.Status) (*v1.
 				return nil, err
 			}
 			if service != nil && service.Status.ID != 0 {
-				notificationServices = append(notificationServices, &aoApi.Service{ID: &service.Status.ID})
+				notificationServices = append(notificationServices, service.Status.ID)
 			}
 		}
 	}
@@ -71,7 +73,7 @@ func (as *AlertsService) Sync(spec v1.TokenAndDataSpec, status *v1.Status) (*v1.
 			for _, service := range aoAlert.Services {
 				index := -1
 				for idx, customService := range notificationServices {
-					if *customService.ID == *service.ID {
+					if customService == service.ID {
 						index = idx
 					}
 				}
@@ -79,7 +81,7 @@ func (as *AlertsService) Sync(spec v1.TokenAndDataSpec, status *v1.Status) (*v1.
 				if index != -1 {
 					notificationServices = append(notificationServices[:index], notificationServices[index+1:]...)
 				} else {
-					err := as.DisassociateFromService(*aoAlert.ID, *service.ID)
+					err := as.DisassociateFromService(aoAlert.ID, service.ID)
 					if err != nil {
 						return nil, err
 					}
@@ -87,13 +89,13 @@ func (as *AlertsService) Sync(spec v1.TokenAndDataSpec, status *v1.Status) (*v1.
 
 			}
 			for _, service := range notificationServices {
-				err = as.AssociateToService(*aoAlert.ID, *service.ID)
+				err = as.AssociateToService(aoAlert.ID, service)
 				if err != nil {
 					return nil, err
 				}
 			}
 			//Service exists in AppOptics now lets check that they are actually synced
-			if status.UpdatedAt != *aoAlert.UpdatedAt || specChanged {
+			if status.UpdatedAt != aoAlert.UpdatedAt || specChanged {
 				// Local vs Remote are different so update AO
 				//SET THE ALERT ID FOR THE OBJECT ABOUT TO BE PUT
 				customAlert.ID = aoAlert.ID
@@ -117,14 +119,14 @@ func (as *AlertsService) Sync(spec v1.TokenAndDataSpec, status *v1.Status) (*v1.
 
 				// Store the Hashes
 				status.Hashes.AppOptics = hash
-				status.UpdatedAt = *aoAlert.UpdatedAt
+				status.UpdatedAt = aoAlert.UpdatedAt
 			}
 		}
 	}
 	return status, nil
 }
 
-func (as *AlertsService) createAlert(alert aoApi.Alert, status *v1.Status) (*v1.Status, error) {
+func (as *AlertsService) createAlert(alert aoApi.AlertRequest, status *v1.Status) (*v1.Status, error) {
 	//Associate services
 	services := alert.Services
 	// Nil out as the current Alert.Services struct is not an array of ints
@@ -137,13 +139,13 @@ func (as *AlertsService) createAlert(alert aoApi.Alert, status *v1.Status) (*v1.
 
 	// Associate Services to the Alert
 	for _, service := range services {
-		err = as.AssociateToService(*aoAlert.ID, *service.ID)
+		err = as.AssociateToService(aoAlert.ID, service)
 		if err != nil {
 			return nil, err
 		}
 	}
-	status.ID = *aoAlert.ID
-	status.UpdatedAt = *aoAlert.UpdatedAt
+	status.ID = aoAlert.ID
+	status.UpdatedAt = aoAlert.UpdatedAt
 	hash, err := json.Marshal(aoAlert)
 	if err != nil {
 		return nil, err

@@ -1,0 +1,21 @@
+# Labels to add to all resources and selectors.
+commonLabels:
+  app: appoptics-controller
+
+# Images modify the tags for images without
+# creating patches.
+images:
+- name: ghcr.io/varbhat/appoptics-kubernetes-controller
+  newTag: latest
+
+# Value of this field is prepended to the
+# names of all resources
+# namePrefix: appoptics-controller
+
+# List of resource files that kustomize reads, modifies
+# and emits as a YAML string
+resources:
+- appoptics-controller-clusterrole.yaml
+- appoptics-controller-crb.yaml
+- appoptics-controller-deploy.yaml
+- appoptics-controller-sa.yaml

@@ -7,16 +7,19 @@ import (
 	"testing"
 
 	"encoding/json"
+
 	"github.com/appoptics/appoptics-api-go"
 	"github.com/gorilla/mux"
-	"github.com/solarwinds/appoptics-kubernetes-controller/pkg/apis/appoptics-kubernetes-controller/v1"
-	v12 "github.com/solarwinds/appoptics-kubernetes-controller/pkg/client/listers/appoptics-kubernetes-controller/v1"
+	v1 "github.com/solarwinds/appoptics-kubernetes-controller/pkg/apis/appopticskubernetescontroller/v1"
+
 	"io"
 	"io/ioutil"
+	"strings"
+
+	v12 "github.com/solarwinds/appoptics-kubernetes-controller/pkg/generated/listers/appopticskubernetescontroller/v1"
 	v13 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/client-go/tools/cache"
-	"strings"
 )
 
 var (
